@@ -1,0 +1,9 @@
+### GET request to example server
+POST http://localhost:8080
+Content-Type: text/plain
+
+https://practicum.yandex.ru/
+###
+
+GET http://localhost:8080/qj
+Content-Type: text/plain
