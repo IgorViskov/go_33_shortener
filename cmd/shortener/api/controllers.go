@@ -17,12 +17,12 @@ type mainController struct {
 
 func (c mainController) Get(w http.ResponseWriter, req *http.Request) {
 	short := req.URL.Path[1:]
-	movedUrl, err := c.service.UnShort(short)
+	moved, err := c.service.UnShort(short)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	http.Redirect(w, req, movedUrl, http.StatusTemporaryRedirect)
+	http.Redirect(w, req, moved, http.StatusTemporaryRedirect)
 }
 
 func (c mainController) Post(w http.ResponseWriter, req *http.Request) {
@@ -31,7 +31,7 @@ func (c mainController) Post(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	u, okValidate := validateUrl(string(body))
+	u, okValidate := validateURL(string(body))
 	if !okValidate {
 		http.Error(w, "Invalid URL", http.StatusBadRequest)
 		return
@@ -42,6 +42,7 @@ func (c mainController) Post(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	w.WriteHeader(http.StatusCreated)
 	redirect := c.config.RedirectAddress
 	redirect.Path = shorted
 	_, ok := w.Write([]byte(redirect.String()))
@@ -49,8 +50,6 @@ func (c mainController) Post(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, ok.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Add("Content-Type", "plain/text")
-	w.WriteHeader(http.StatusCreated)
 }
 
 func (c mainController) GetPath() string {
@@ -65,7 +64,7 @@ func NewMainController(config *config.AppConfig) *mainController {
 	}
 }
 
-func validateUrl(u string) (string, bool) {
+func validateURL(u string) (string, bool) {
 	if len(strings.TrimSpace(u)) == 0 {
 		return "", false
 	}

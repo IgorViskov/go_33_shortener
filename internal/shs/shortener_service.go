@@ -27,7 +27,7 @@ func (s *ShortenerService) Short(url string) (string, error) {
 			return "", err
 		}
 	}
-	short := Encode(exist.Id)
+	short := Encode(exist.ID)
 	return short, nil
 }
 

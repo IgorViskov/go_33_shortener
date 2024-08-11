@@ -27,13 +27,13 @@ func (i *InMemoryStorage) Get(id uint64) (*Record, error) {
 
 func (i *InMemoryStorage) Insert(entity *Record) (*Record, error) {
 	id := i.current.Add(1)
-	entity.Id = id
+	entity.ID = id
 	i.storage.Set(id, entity)
 	return entity, nil
 }
 
 func (i *InMemoryStorage) Update(entity *Record) (*Record, error) {
-	i.storage.Set(entity.Id, entity)
+	i.storage.Set(entity.ID, entity)
 	return entity, nil
 }
 
