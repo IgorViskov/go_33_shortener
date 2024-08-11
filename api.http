@@ -7,3 +7,8 @@ https://practicum.yandex.ru/
 
 GET http://localhost:8080/qj
 Content-Type: text/plain
+###
+
+POST http://localhost:8080
+Content-Type: text/plain
+

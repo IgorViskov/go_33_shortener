@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 type mainController struct {
@@ -19,30 +20,37 @@ func (c mainController) Get(w http.ResponseWriter, req *http.Request) {
 	movedUrl, err := c.service.UnShort(short)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
-	http.Redirect(w, req, movedUrl, http.StatusMovedPermanently)
+	http.Redirect(w, req, movedUrl, http.StatusTemporaryRedirect)
 }
 
 func (c mainController) Post(w http.ResponseWriter, req *http.Request) {
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 	u, okValidate := validateUrl(string(body))
 	if !okValidate {
 		http.Error(w, "Invalid URL", http.StatusBadRequest)
+		return
 	}
 	shorted, err := c.service.Short(u)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 	redirect := c.config.RedirectAddress
 	redirect.Path = shorted
 	_, ok := w.Write([]byte(redirect.String()))
 	if ok != nil {
 		http.Error(w, ok.Error(), http.StatusInternalServerError)
+		return
 	}
+	w.Header().Add("Content-Type", "plain/text")
+	w.WriteHeader(http.StatusCreated)
 }
 
 func (c mainController) GetPath() string {
@@ -58,6 +66,9 @@ func NewMainController(config *config.AppConfig) *mainController {
 }
 
 func validateUrl(u string) (string, bool) {
+	if len(strings.TrimSpace(u)) == 0 {
+		return "", false
+	}
 	_, err := url.Parse(u)
 	if err != nil {
 		return "", false
