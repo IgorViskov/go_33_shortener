@@ -42,6 +42,8 @@ func (c mainController) Post(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusCreated)
 	redirect := c.config.RedirectAddress
 	redirect.Path = shorted
@@ -68,8 +70,8 @@ func validateURL(u string) (string, bool) {
 	if len(strings.TrimSpace(u)) == 0 {
 		return "", false
 	}
-	_, err := url.Parse(u)
-	if err != nil {
+	p, err := url.Parse(u)
+	if err != nil || p.Scheme == "" || p.Host == "" {
 		return "", false
 	}
 	return u, true

@@ -20,7 +20,7 @@ func NewInMemoryStorage() *InMemoryStorage {
 func (i *InMemoryStorage) Get(id uint64) (*Record, error) {
 	val, ok := i.storage.Get(id)
 	if !ok {
-		return nil, errors.RiseError("")
+		return nil, errors.RiseError("Redirect URL not found")
 	}
 	return val, nil
 }
