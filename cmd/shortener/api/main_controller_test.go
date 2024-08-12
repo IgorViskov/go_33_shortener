@@ -43,7 +43,7 @@ func Test_mainController_Get(t *testing.T) {
 				code:        400,
 				redirect:    ``,
 				response:    `Redirect URL not found`,
-				contentType: "text/plain; charset=UTF-8",
+				contentType: "text/plain",
 			},
 		},
 		{
@@ -53,7 +53,7 @@ func Test_mainController_Get(t *testing.T) {
 				code:        400,
 				redirect:    ``,
 				response:    `Redirect URL not found`,
-				contentType: "text/plain; charset=UTF-8",
+				contentType: "text/plain",
 			},
 		},
 	}
@@ -120,7 +120,7 @@ func Test_mainController_Post(t *testing.T) {
 			want: want{
 				code:        201,
 				response:    `http://localhost:8080/qj`,
-				contentType: "text/plain; charset=utf-8",
+				contentType: "text/plain",
 			},
 		},
 		{
@@ -129,7 +129,7 @@ func Test_mainController_Post(t *testing.T) {
 			want: want{
 				code:        201,
 				response:    `http://localhost:8080/qj`,
-				contentType: "text/plain; charset=utf-8",
+				contentType: "text/plain",
 			},
 		},
 		{
@@ -138,7 +138,7 @@ func Test_mainController_Post(t *testing.T) {
 			want: want{
 				code:        400,
 				response:    `Invalid URL`,
-				contentType: "text/plain; charset=utf-8",
+				contentType: "text/plain",
 			},
 		},
 		{
@@ -147,7 +147,7 @@ func Test_mainController_Post(t *testing.T) {
 			want: want{
 				code:        400,
 				response:    `Invalid URL`,
-				contentType: "text/plain; charset=utf-8",
+				contentType: "text/plain",
 			},
 		},
 	}
