@@ -4,29 +4,19 @@ import (
 	"github.com/IgorViskov/go_33_shortener/cmd/shortener/api"
 	"github.com/IgorViskov/go_33_shortener/internal/app"
 	"github.com/IgorViskov/go_33_shortener/internal/config"
-	"net/http"
+	"github.com/IgorViskov/go_33_shortener/internal/storage"
 	"net/url"
 )
 
 func main() {
-	mux := http.NewServeMux()
 	conf := getConfig()
-
-	builder := appInstall(conf)
-
-	builder.Build(mux)
-
-	err := http.ListenAndServe(conf.BaseAddress, mux)
-	if err != nil {
-		panic(err)
-	}
+	app.Create().Configure(configurator(conf)).Build().Start(conf)
 }
 
-func appInstall(conf *config.AppConfig) app.ControllerBuilder {
-	builder := app.ControllerBuilder{}
-	builder.AddController(api.NewMainController(conf))
-
-	return builder
+func configurator(conf *config.AppConfig) app.ConfigureFunc {
+	return func(cb *app.ServerBuilder) {
+		cb.AddController(api.NewMainController(conf, storage.NewInMemoryStorage()))
+	}
 }
 
 func getConfig() *config.AppConfig {

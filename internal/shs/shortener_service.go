@@ -9,10 +9,9 @@ type ShortenerService struct {
 	repository storage.Repository[uint64, storage.Record]
 }
 
-// NewShortenerService TODO inject storage from DI?
-func NewShortenerService() *ShortenerService {
+func NewShortenerService(r storage.Repository[uint64, storage.Record]) *ShortenerService {
 	return &ShortenerService{
-		repository: storage.NewInMemoryStorage(),
+		repository: r,
 	}
 }
 

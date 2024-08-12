@@ -2,7 +2,10 @@ package api
 
 import (
 	"github.com/IgorViskov/go_33_shortener/internal/config"
+	"github.com/IgorViskov/go_33_shortener/internal/errors"
 	"github.com/IgorViskov/go_33_shortener/internal/shs"
+	"github.com/IgorViskov/go_33_shortener/internal/storage"
+	"github.com/labstack/echo/v4"
 	"io"
 	"net/http"
 	"net/url"
@@ -15,53 +18,44 @@ type mainController struct {
 	config  *config.AppConfig
 }
 
-func (c mainController) Get(w http.ResponseWriter, req *http.Request) {
-	short := req.URL.Path[1:]
+func (c mainController) Get(context echo.Context) error {
+	short := context.Request().URL.Path[1:]
 	moved, err := c.service.UnShort(short)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		return err
 	}
-	http.Redirect(w, req, moved, http.StatusTemporaryRedirect)
+	return context.Redirect(http.StatusTemporaryRedirect, moved)
 }
 
-func (c mainController) Post(w http.ResponseWriter, req *http.Request) {
-	body, err := io.ReadAll(req.Body)
+func (c mainController) Post(context echo.Context) error {
+	body, err := io.ReadAll(context.Request().Body)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		return err
 	}
 	u, okValidate := validateURL(string(body))
 	if !okValidate {
-		http.Error(w, "Invalid URL", http.StatusBadRequest)
-		return
+		return errors.RiseError("Invalid URL")
 	}
 	shorted, err := c.service.Short(u)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		return err
 	}
 
-	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
-	w.WriteHeader(http.StatusCreated)
 	redirect := c.config.RedirectAddress
 	redirect.Path = shorted
-	_, ok := w.Write([]byte(redirect.String()))
-	if ok != nil {
-		http.Error(w, ok.Error(), http.StatusInternalServerError)
-		return
-	}
+
+	return context.String(http.StatusCreated, redirect.String())
 }
 
 func (c mainController) GetPath() string {
 	return c.path
 }
 
-func NewMainController(config *config.AppConfig) *mainController {
+func NewMainController(config *config.AppConfig, r storage.Repository[uint64, storage.Record]) *mainController {
 	return &mainController{
-		path:    "/",
-		service: shs.NewShortenerService(),
+		path:    "/*",
+		service: shs.NewShortenerService(r),
 		config:  config,
 	}
 }

@@ -6,8 +6,8 @@ import (
 )
 
 type AppError struct {
-	DateTime time.Time
-	Message  string
+	DateTime time.Time `json:"-"`
+	Message  string    `json:"Message"`
 }
 
 func (e *AppError) Error() string {

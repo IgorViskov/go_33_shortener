@@ -1,11 +1,11 @@
 package app
 
 import (
-	"net/http"
+	"github.com/labstack/echo/v4"
 )
 
 type Controller interface {
-	Get(w http.ResponseWriter, req *http.Request)
-	Post(w http.ResponseWriter, req *http.Request)
+	Get(c echo.Context) error
+	Post(c echo.Context) error
 	GetPath() string
 }
