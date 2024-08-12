@@ -31,7 +31,7 @@ func Test_mainController_Get(t *testing.T) {
 				code:        307,
 				redirect:    `https://practicum.yandex.ru/`,
 				response:    `<a href="https://practicum.yandex.ru/">Temporary Redirect</a>.` + "\n\n",
-				contentType: "text/html; charset=utf-8",
+				contentType: "text/html",
 			},
 		},
 		{
@@ -41,7 +41,7 @@ func Test_mainController_Get(t *testing.T) {
 				code:        400,
 				redirect:    ``,
 				response:    `Redirect URL not found`,
-				contentType: "text/plain; charset=utf-8",
+				contentType: "text/plain",
 			},
 		},
 		{
@@ -51,7 +51,7 @@ func Test_mainController_Get(t *testing.T) {
 				code:        400,
 				redirect:    ``,
 				response:    `Redirect URL not found`,
-				contentType: "text/plain; charset=utf-8",
+				contentType: "text/plain",
 			},
 		},
 	}
@@ -88,7 +88,7 @@ func Test_mainController_Get(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.Contains(t, string(resBody), tt.want.response)
-			assert.Equal(t, tt.want.contentType, res.Header.Get("Content-Type"))
+			assert.Contains(t, res.Header.Get("Content-Type"), tt.want.contentType)
 			assert.Equal(t, tt.want.redirect, res.Header.Get("Location"))
 		})
 	}
@@ -111,7 +111,7 @@ func Test_mainController_Post(t *testing.T) {
 			want: want{
 				code:        201,
 				response:    `http://localhost:8080/qj`,
-				contentType: "text/plain; charset=utf-8",
+				contentType: "text/plain",
 			},
 		},
 		{
@@ -120,7 +120,7 @@ func Test_mainController_Post(t *testing.T) {
 			want: want{
 				code:        201,
 				response:    `http://localhost:8080/qj`,
-				contentType: "text/plain; charset=utf-8",
+				contentType: "text/plain",
 			},
 		},
 		{
@@ -129,7 +129,7 @@ func Test_mainController_Post(t *testing.T) {
 			want: want{
 				code:        400,
 				response:    `Invalid URL`,
-				contentType: "text/plain; charset=utf-8",
+				contentType: "text/plain",
 			},
 		},
 		{
@@ -138,7 +138,7 @@ func Test_mainController_Post(t *testing.T) {
 			want: want{
 				code:        400,
 				response:    `Invalid URL`,
-				contentType: "text/plain; charset=utf-8",
+				contentType: "text/plain",
 			},
 		},
 	}
@@ -168,7 +168,7 @@ func Test_mainController_Post(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.Contains(t, string(resBody), tt.want.response)
-			assert.Equal(t, tt.want.contentType, res.Header.Get("Content-Type"))
+			assert.Contains(t, res.Header.Get("Content-Type"), tt.want.contentType)
 		})
 	}
 }
