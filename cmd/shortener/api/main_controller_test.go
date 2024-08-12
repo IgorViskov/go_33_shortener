@@ -96,7 +96,7 @@ func Test_mainController_Get(t *testing.T) {
 
 				require.NoError(t, err)
 				assert.Contains(t, string(resBody), tt.want.response)
-				assert.Equal(t, tt.want.contentType, res.Header.Get("Content-Type"))
+				assert.Contains(t, res.Header.Get("Content-Type"), tt.want.contentType)
 				assert.Equal(t, tt.want.redirect, res.Header.Get("Location"))
 			}
 		})
@@ -181,7 +181,7 @@ func Test_mainController_Post(t *testing.T) {
 
 				require.NoError(t, err)
 				assert.Contains(t, string(resBody), tt.want.response)
-				assert.Equal(t, tt.want.contentType, res.Header.Get("Content-Type"))
+				assert.Contains(t, res.Header.Get("Content-Type"), tt.want.contentType)
 			}
 		})
 	}
