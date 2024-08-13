@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"github.com/IgorViskov/go_33_shortener/cmd/shortener/api"
 	"github.com/IgorViskov/go_33_shortener/internal/app"
 	"github.com/IgorViskov/go_33_shortener/internal/config"
@@ -15,7 +16,9 @@ func main() {
 
 func configurator(conf *config.AppConfig) app.ConfigureFunc {
 	return func(cb *app.ServerBuilder) {
-		cb.AddController(api.NewMainController(conf, storage.NewInMemoryStorage()))
+		s := storage.NewInMemoryStorage()
+		cb.AddController(api.NewShortController(conf, s))
+		cb.AddController(api.NewUnShortController(conf, s))
 	}
 }
 
@@ -24,8 +27,19 @@ func getConfig() *config.AppConfig {
 		Scheme: "http",
 		Host:   "localhost:8080",
 	}
-	return &config.AppConfig{
+	conf := &config.AppConfig{
 		RedirectAddress: redirect,
-		BaseAddress:     "localhost:8080",
+		HostName:        "localhost:8080",
 	}
+
+	readFlags(conf)
+
+	return conf
+}
+
+func readFlags(conf *config.AppConfig) {
+	flag.Func("a", "Адрес запуска HTTP-сервера", config.HostNameParser(conf))
+	flag.Func("b", "Базовый адрес результирующего сокращённого URL", config.RedirectAddressParser(conf))
+	// запускаем парсинг
+	flag.Parse()
 }

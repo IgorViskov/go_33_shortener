@@ -1,6 +1,7 @@
 package app
 
 import (
+	"errors"
 	"github.com/IgorViskov/go_33_shortener/internal/config"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
@@ -49,16 +50,33 @@ func (cb *ServerBuilder) Build() Starting {
 		cb.router.Use(m)
 	}
 	for _, c := range cb.controllers {
-		cb.router.GET(c.GetPath(), c.Get)
-		cb.router.POST(c.GetPath(), c.Post)
+		if get := c.Get(); get != nil {
+			cb.router.GET(c.GetPath(), get)
+		}
+		if post := c.Post(); post != nil {
+			cb.router.POST(c.GetPath(), post)
+		}
 	}
 	cb.router.HTTPErrorHandler = customHTTPErrorHandler
 	return cb
 }
 
 func (cb *ServerBuilder) Start(conf *config.AppConfig) {
-	if err := cb.router.Start(conf.BaseAddress); err != http.ErrServerClosed {
-		log.Fatal(err)
+	if conf.HostName != conf.RedirectAddress.Host {
+		go func() {
+			if err := http.ListenAndServe(conf.HostName, cb.router); !errors.Is(err, http.ErrServerClosed) {
+				log.Fatal(err)
+			}
+
+		}()
+
+		if err := http.ListenAndServe(conf.RedirectAddress.Host, cb.router); !errors.Is(err, http.ErrServerClosed) {
+			log.Fatal(err)
+		}
+	} else {
+		if err := cb.router.Start(conf.HostName); !errors.Is(err, http.ErrServerClosed) {
+			log.Fatal(err)
+		}
 	}
 }
 

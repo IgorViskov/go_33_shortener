@@ -5,7 +5,7 @@ import (
 )
 
 type Controller interface {
-	Get(c echo.Context) error
-	Post(c echo.Context) error
+	Get() func(c echo.Context) error
+	Post() func(c echo.Context) error
 	GetPath() string
 }
