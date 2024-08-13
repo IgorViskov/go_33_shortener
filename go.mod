@@ -3,6 +3,7 @@ module github.com/IgorViskov/go_33_shortener
 go 1.22.5
 
 require (
+	github.com/caarlos0/env/v11 v11.2.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/labstack/echo/v4 v4.12.0 // indirect
 	github.com/labstack/gommon v0.4.2 // indirect

@@ -6,6 +6,7 @@ import (
 	"github.com/IgorViskov/go_33_shortener/internal/app"
 	"github.com/IgorViskov/go_33_shortener/internal/config"
 	"github.com/IgorViskov/go_33_shortener/internal/storage"
+	"github.com/caarlos0/env/v11"
 	"net/url"
 )
 
@@ -23,7 +24,7 @@ func configurator(conf *config.AppConfig) app.ConfigureFunc {
 }
 
 func getConfig() *config.AppConfig {
-	redirect := &url.URL{
+	redirect := url.URL{
 		Scheme: "http",
 		Host:   "localhost:8080",
 	}
@@ -33,6 +34,7 @@ func getConfig() *config.AppConfig {
 	}
 
 	readFlags(conf)
+	readEnvironments(conf)
 
 	return conf
 }
@@ -42,4 +44,8 @@ func readFlags(conf *config.AppConfig) {
 	flag.Func("b", "Базовый адрес результирующего сокращённого URL", config.RedirectAddressParser(conf))
 	// запускаем парсинг
 	flag.Parse()
+}
+
+func readEnvironments(conf *config.AppConfig) {
+	_ = env.Parse(conf)
 }

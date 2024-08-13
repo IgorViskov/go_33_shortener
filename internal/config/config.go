@@ -5,8 +5,8 @@ import (
 )
 
 type AppConfig struct {
-	HostName        string `validate:"hostname_port"`
-	RedirectAddress *url.URL
+	HostName        string  `validate:"hostname_port" env:"SERVER_ADDRESS"`
+	RedirectAddress url.URL `env:"BASE_URL"`
 }
 
 func HostNameParser(conf *AppConfig) func(flagValue string) error {
@@ -22,7 +22,7 @@ func RedirectAddressParser(conf *AppConfig) func(flagValue string) error {
 		if err != nil {
 			return err
 		}
-		conf.RedirectAddress = u
+		conf.RedirectAddress = *u
 		return nil
 	}
 }

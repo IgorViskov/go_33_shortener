@@ -39,7 +39,7 @@ func (c shortController) Post() func(context echo.Context) error {
 			return err
 		}
 
-		redirect := *c.config.RedirectAddress
+		redirect := c.config.RedirectAddress
 		redirect.Path = fmt.Sprintf("%s/%s", redirect.Path, shorted)
 
 		return context.String(http.StatusCreated, redirect.String())

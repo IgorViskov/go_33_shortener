@@ -109,7 +109,7 @@ func createUnShortController() *unShortController {
 	return &unShortController{
 		path:    "/*",
 		service: shs.NewShortenerService(storage.NewInMemoryStorage()),
-		config: &config.AppConfig{RedirectAddress: &url.URL{
+		config: &config.AppConfig{RedirectAddress: url.URL{
 			Scheme: "http",
 			Host:   "localhost:8080",
 		},
