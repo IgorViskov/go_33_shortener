@@ -19,7 +19,7 @@ func Encode(n uint64) string {
 	for n > 0 {
 		r := n % uint64(len(alphabetConfig))
 		t = append(t, alphabetConfig[r])
-		n = n / uint64(len(alphabetConfig))
+		n /= uint64(len(alphabetConfig))
 	}
 
 	/* Reverse */

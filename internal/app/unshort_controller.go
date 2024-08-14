@@ -1,4 +1,4 @@
-package api
+package app
 
 import (
 	"github.com/IgorViskov/go_33_shortener/internal/config"

@@ -1,7 +1,6 @@
-package api
+package app
 
 import (
-	"github.com/IgorViskov/go_33_shortener/internal/app"
 	"github.com/IgorViskov/go_33_shortener/internal/config"
 	"github.com/IgorViskov/go_33_shortener/internal/shs"
 	"github.com/IgorViskov/go_33_shortener/internal/storage"
@@ -15,71 +14,72 @@ import (
 	"testing"
 )
 
-func Test_shortController_Get(t *testing.T) {
-	con := createShortController()
-	assert.Nil(t, con.Get())
-}
-
-func Test_shortController_Post(t *testing.T) {
+func Test_mainController_Get(t *testing.T) {
 	type want struct {
 		code        int
 		response    string
+		redirect    string
 		contentType string
 	}
 	tests := []struct {
-		name string
-		body string
-		want want
+		name    string
+		request string
+		want    want
 	}{
 		{
-			name: "positive test #1",
-			body: `https://practicum.yandex.ru/`,
+			name:    "positive test #1",
+			request: "/qj",
 			want: want{
-				code:        201,
-				response:    `http://localhost:8080/qj`,
-				contentType: "text/plain",
+				code:        307,
+				redirect:    `https://practicum.yandex.ru/`,
+				response:    ``,
+				contentType: "",
 			},
 		},
 		{
-			name: "positive test #2",
-			body: `http://localhost:8080`,
-			want: want{
-				code:        201,
-				response:    `http://localhost:8080/qj`,
-				contentType: "text/plain",
-			},
-		},
-		{
-			name: "negative test #3",
-			body: `/qweuoqiweuoiq_/*weu/kdalsdk;las?qweoipoq=73817`,
+			name:    "negative test #2",
+			request: "/",
 			want: want{
 				code:        400,
-				response:    `Invalid URL`,
+				redirect:    ``,
+				response:    `Redirect URL not found`,
 				contentType: "text/plain",
 			},
 		},
 		{
-			name: "negative test #4",
-			body: ``,
+			name:    "negative test #3",
+			request: `/qweuoqiweuoiq_/*weu/kdalsdk;las?qweoipoq=73817`,
 			want: want{
 				code:        400,
-				response:    `Invalid URL`,
+				redirect:    ``,
+				response:    `Redirect URL not found`,
 				contentType: "text/plain",
 			},
 		},
 	}
 
 	for _, tt := range tests {
-		con := createShortController()
-		e := app.Create().Build().GetEcho()
+		unShort := createUnShortController()
+		short := createShortController()
+		e := Create().Build().GetEcho()
 		t.Run(tt.name, func(t *testing.T) {
+			//Пдготовка
+			postReader := strings.NewReader(tt.want.redirect)
+			postReq := httptest.NewRequest(http.MethodGet, "/", postReader)
+
+			rec := httptest.NewRecorder()
+			postContext := e.NewContext(postReq, rec)
+			postHandler := short.Post()
+			postHandler(postContext)
+
 			//Тест
-			request := httptest.NewRequest(http.MethodGet, "localhost:8080", strings.NewReader(tt.body))
+			request := httptest.NewRequest(http.MethodGet, tt.request, nil)
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
 			c := e.NewContext(request, w)
 
-			var err = con.Post()(c)
+			err := unShort.Get()(c)
+
 			if err != nil {
 				assert.Error(t, err, tt.want.response)
 			} else {
@@ -93,13 +93,19 @@ func Test_shortController_Post(t *testing.T) {
 				require.NoError(t, err)
 				assert.Contains(t, string(resBody), tt.want.response)
 				assert.Contains(t, res.Header.Get("Content-Type"), tt.want.contentType)
+				assert.Equal(t, tt.want.redirect, res.Header.Get("Location"))
 			}
 		})
 	}
 }
 
-func createShortController() *shortController {
-	return &shortController{
+func Test_mainController_Post(t *testing.T) {
+	con := createUnShortController()
+	assert.Nil(t, con.Post())
+}
+
+func createUnShortController() *unShortController {
+	return &unShortController{
 		path:    "/*",
 		service: shs.NewShortenerService(storage.NewInMemoryStorage()),
 		config: &config.AppConfig{RedirectAddress: url.URL{
