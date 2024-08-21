@@ -4,6 +4,7 @@ import (
 	"flag"
 	"github.com/IgorViskov/go_33_shortener/internal/app"
 	"github.com/IgorViskov/go_33_shortener/internal/config"
+	"github.com/IgorViskov/go_33_shortener/internal/log"
 	"github.com/IgorViskov/go_33_shortener/internal/storage"
 	"github.com/caarlos0/env/v11"
 	"net/url"
@@ -17,6 +18,7 @@ func main() {
 func configurator(conf *config.AppConfig) app.ConfigureFunc {
 	return func(cb *app.ServerBuilder) {
 		s := storage.NewInMemoryStorage()
+		cb.Use(log.Logging())
 		cb.AddController(app.NewShortController(conf, s))
 		cb.AddController(app.NewUnShortController(conf, s))
 	}
