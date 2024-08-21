@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/IgorViskov/go_33_shortener/internal/app/api/models"
 	"github.com/IgorViskov/go_33_shortener/internal/config"
@@ -29,9 +30,6 @@ func (c shortenAPIController) Post() func(context echo.Context) error {
 		if err != nil {
 			return context.String(http.StatusBadRequest, "Invalid json")
 		}
-		if err != nil {
-			return err
-		}
 		u, okValidate := validation.URL(dto.Url)
 		if !okValidate {
 			return errors.RiseError("Invalid URL")
@@ -47,7 +45,8 @@ func (c shortenAPIController) Post() func(context echo.Context) error {
 
 		responseDto := new(models.ShortDto)
 		responseDto.Result = redirect.String()
-		return context.JSON(http.StatusCreated, responseDto)
+		context.Response().Header().Add("Content-Type", "application/json")
+		return json.NewEncoder(context.Response()).Encode(&responseDto)
 	}
 }
 
