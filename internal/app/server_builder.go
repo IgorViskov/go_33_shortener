@@ -3,6 +3,7 @@ package app
 import (
 	"errors"
 	"github.com/IgorViskov/go_33_shortener/internal/config"
+	"github.com/IgorViskov/go_33_shortener/internal/ex"
 	"github.com/emirpasic/gods/sets/hashset"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -10,7 +11,7 @@ import (
 	"net/http"
 )
 
-var compressContentTypes = hashset.New("plain/text", "application/json")
+var compressContentTypes = hashset.New("plain/text", "application/json", "application/x-gzip")
 
 type ServerBuilder struct {
 	controllers []Controller
@@ -50,7 +51,10 @@ func (cb *ServerBuilder) UseCompression() *ServerBuilder {
 	}))
 	cb.Use(middleware.DecompressWithConfig(middleware.DecompressConfig{
 		Skipper: func(c echo.Context) bool {
-			return !compressContentTypes.Contains(c.Request().Header.Get(echo.HeaderContentType))
+			if ex.AnyString(compressContentTypes, c.Request().Header.Values(echo.HeaderContentType)) && (c.Request().Header.Get(echo.HeaderContentEncoding) == "gzip") {
+				return false
+			}
+			return true
 		},
 	}))
 
