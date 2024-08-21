@@ -1,6 +1,7 @@
 package shs
 
 import (
+	"github.com/IgorViskov/go_33_shortener/internal/algo"
 	"github.com/IgorViskov/go_33_shortener/internal/storage"
 	"time"
 )
@@ -26,12 +27,12 @@ func (s *ShortenerService) Short(url string) (string, error) {
 			return "", err
 		}
 	}
-	short := Encode(exist.ID)
+	short := algo.Encode(exist.ID)
 	return short, nil
 }
 
 func (s *ShortenerService) UnShort(token string) (string, error) {
-	id := Decode(token)
+	id := algo.Decode(token)
 	val, err := s.repository.Get(id)
 	if err != nil {
 		return "", err

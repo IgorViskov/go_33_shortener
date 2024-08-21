@@ -98,14 +98,17 @@ func Test_shortController_Post(t *testing.T) {
 }
 
 func createShortController() *shortController {
+	conf := &config.AppConfig{RedirectAddress: url.URL{
+		Scheme: "http",
+		Host:   "localhost:8080",
+	},
+		HostName:    "localhost:8080",
+		StorageFile: "db.json",
+	}
+	s, _ := storage.NewHybridStorage(conf)
 	return &shortController{
 		path:    "/*",
-		service: shs.NewShortenerService(storage.NewInMemoryStorage()),
-		config: &config.AppConfig{RedirectAddress: url.URL{
-			Scheme: "http",
-			Host:   "localhost:8080",
-		},
-			HostName: "localhost:8080",
-		},
+		service: shs.NewShortenerService(s),
+		config:  conf,
 	}
 }

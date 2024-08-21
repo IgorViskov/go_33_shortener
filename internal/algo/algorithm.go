@@ -1,4 +1,4 @@
-package shs
+package algo
 
 import (
 	"math"

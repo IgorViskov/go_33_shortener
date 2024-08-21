@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/IgorViskov/go_33_shortener/internal/app"
 	"github.com/IgorViskov/go_33_shortener/internal/app/api"
 	"github.com/IgorViskov/go_33_shortener/internal/config"
@@ -9,6 +10,8 @@ import (
 	"github.com/IgorViskov/go_33_shortener/internal/storage"
 	"github.com/caarlos0/env/v11"
 	"net/url"
+	"os"
+	"path/filepath"
 )
 
 func main() {
@@ -18,7 +21,10 @@ func main() {
 
 func configurator(conf *config.AppConfig) app.ConfigureFunc {
 	return func(cb *app.ServerBuilder) {
-		s := storage.NewInMemoryStorage()
+		s, err := storage.NewHybridStorage(conf)
+		if err != nil {
+			panic(err)
+		}
 		cb.UseCompression()
 		cb.Use(log.Logging())
 		cb.AddController(app.NewShortController(conf, s))
@@ -32,9 +38,11 @@ func getConfig() *config.AppConfig {
 		Scheme: "http",
 		Host:   "localhost:8080",
 	}
+
 	conf := &config.AppConfig{
 		RedirectAddress: redirect,
 		HostName:        "localhost:8080",
+		StorageFile:     fmt.Sprintf("%s%c%s", getExecuteDir(), os.PathSeparator, "db.json"),
 	}
 
 	readFlags(conf)
@@ -46,10 +54,19 @@ func getConfig() *config.AppConfig {
 func readFlags(conf *config.AppConfig) {
 	flag.Func("a", "Адрес запуска HTTP-сервера", config.HostNameParser(conf))
 	flag.Func("b", "Базовый адрес результирующего сокращённого URL", config.RedirectAddressParser(conf))
+	flag.Func("f", "Путь до файла с сохраненными адресами", config.StorageFileParser(conf))
 	// запускаем парсинг
 	flag.Parse()
 }
 
 func readEnvironments(conf *config.AppConfig) {
 	_ = env.Parse(conf)
+}
+
+func getExecuteDir() string {
+	ex, err := os.Executable()
+	if err != nil {
+		panic(err)
+	}
+	return filepath.Dir(ex)
 }
