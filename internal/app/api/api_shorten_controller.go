@@ -30,7 +30,7 @@ func (c shortenAPIController) Post() func(context echo.Context) error {
 		if err != nil {
 			return context.String(http.StatusBadRequest, "Invalid json")
 		}
-		u, okValidate := validation.URL(dto.Url)
+		u, okValidate := validation.URL(dto.URL)
 		if !okValidate {
 			return errors.RiseError("Invalid URL")
 		}
@@ -46,6 +46,7 @@ func (c shortenAPIController) Post() func(context echo.Context) error {
 		responseDto := new(models.ShortDto)
 		responseDto.Result = redirect.String()
 		context.Response().Header().Add("Content-Type", "application/json")
+		context.Response().Status = http.StatusCreated
 		return json.NewEncoder(context.Response()).Encode(&responseDto)
 	}
 }
