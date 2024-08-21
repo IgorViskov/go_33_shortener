@@ -22,7 +22,7 @@ func configurator(conf *config.AppConfig) app.ConfigureFunc {
 		cb.Use(log.Logging())
 		cb.AddController(app.NewShortController(conf, s))
 		cb.AddController(app.NewUnShortController(conf, s))
-		cb.AddController(api.NewShortenApiController(conf, s))
+		cb.AddController(api.NewShortenAPIController(conf, s))
 	}
 }
 

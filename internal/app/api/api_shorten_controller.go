@@ -12,17 +12,17 @@ import (
 	"net/http"
 )
 
-type shortenApiController struct {
+type shortenAPIController struct {
 	path    string
 	service *shs.ShortenerService
 	config  *config.AppConfig
 }
 
-func (c shortenApiController) Get() func(context echo.Context) error {
+func (c shortenAPIController) Get() func(context echo.Context) error {
 	return nil
 }
 
-func (c shortenApiController) Post() func(context echo.Context) error {
+func (c shortenAPIController) Post() func(context echo.Context) error {
 	return func(context echo.Context) error {
 		var dto models.ShortenDto
 		err := context.Bind(&dto)
@@ -51,12 +51,12 @@ func (c shortenApiController) Post() func(context echo.Context) error {
 	}
 }
 
-func (c shortenApiController) GetPath() string {
+func (c shortenAPIController) GetPath() string {
 	return c.path
 }
 
-func NewShortenApiController(config *config.AppConfig, r storage.Repository[uint64, storage.Record]) *shortenApiController {
-	return &shortenApiController{
+func NewShortenAPIController(config *config.AppConfig, r storage.Repository[uint64, storage.Record]) *shortenAPIController {
+	return &shortenAPIController{
 		path:    "/api/shorten",
 		service: shs.NewShortenerService(r),
 		config:  config,
