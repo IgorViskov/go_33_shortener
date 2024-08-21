@@ -19,6 +19,7 @@ func main() {
 func configurator(conf *config.AppConfig) app.ConfigureFunc {
 	return func(cb *app.ServerBuilder) {
 		s := storage.NewInMemoryStorage()
+		cb.UseCompression()
 		cb.Use(log.Logging())
 		cb.AddController(app.NewShortController(conf, s))
 		cb.AddController(app.NewUnShortController(conf, s))
