@@ -8,7 +8,7 @@ import (
 type AppConfig struct {
 	HostName        string  `validate:"hostname_port" env:"SERVER_ADDRESS"`
 	RedirectAddress url.URL `env:"BASE_URL"`
-	StorageFile     string  `json:"FILE_STORAGE_PATH"`
+	StorageFile     string  `env:"FILE_STORAGE_PATH"`
 }
 
 func HostNameParser(conf *AppConfig) func(flagValue string) error {
