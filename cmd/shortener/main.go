@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"github.com/IgorViskov/go_33_shortener/internal/app"
+	"github.com/IgorViskov/go_33_shortener/internal/app/api"
 	"github.com/IgorViskov/go_33_shortener/internal/config"
 	"github.com/IgorViskov/go_33_shortener/internal/log"
 	"github.com/IgorViskov/go_33_shortener/internal/storage"
@@ -21,6 +22,7 @@ func configurator(conf *config.AppConfig) app.ConfigureFunc {
 		cb.Use(log.Logging())
 		cb.AddController(app.NewShortController(conf, s))
 		cb.AddController(app.NewUnShortController(conf, s))
+		cb.AddController(api.NewShortenApiController(conf, s))
 	}
 }
 

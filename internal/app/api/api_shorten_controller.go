@@ -1,34 +1,38 @@
-package app
+package api
 
 import (
 	"fmt"
+	"github.com/IgorViskov/go_33_shortener/internal/app/api/models"
 	"github.com/IgorViskov/go_33_shortener/internal/config"
 	"github.com/IgorViskov/go_33_shortener/internal/errors"
 	"github.com/IgorViskov/go_33_shortener/internal/shs"
 	"github.com/IgorViskov/go_33_shortener/internal/storage"
 	"github.com/IgorViskov/go_33_shortener/internal/validation"
 	"github.com/labstack/echo/v4"
-	"io"
 	"net/http"
 )
 
-type shortController struct {
+type shortenApiController struct {
 	path    string
 	service *shs.ShortenerService
 	config  *config.AppConfig
 }
 
-func (c shortController) Get() func(context echo.Context) error {
+func (c shortenApiController) Get() func(context echo.Context) error {
 	return nil
 }
 
-func (c shortController) Post() func(context echo.Context) error {
+func (c shortenApiController) Post() func(context echo.Context) error {
 	return func(context echo.Context) error {
-		body, err := io.ReadAll(context.Request().Body)
+		var dto models.ShortenDto
+		err := context.Bind(&dto)
+		if err != nil {
+			return context.String(http.StatusBadRequest, "Invalid json")
+		}
 		if err != nil {
 			return err
 		}
-		u, okValidate := validation.URL(string(body))
+		u, okValidate := validation.URL(dto.Url)
 		if !okValidate {
 			return errors.RiseError("Invalid URL")
 		}
@@ -41,17 +45,19 @@ func (c shortController) Post() func(context echo.Context) error {
 		redirect := c.config.RedirectAddress
 		redirect.Path = fmt.Sprintf("%s/%s", redirect.Path, shorted)
 
-		return context.String(http.StatusCreated, redirect.String())
+		responseDto := new(models.ShortDto)
+		responseDto.Result = redirect.String()
+		return context.JSON(http.StatusCreated, responseDto)
 	}
 }
 
-func (c shortController) GetPath() string {
+func (c shortenApiController) GetPath() string {
 	return c.path
 }
 
-func NewShortController(config *config.AppConfig, r storage.Repository[uint64, storage.Record]) *shortController {
-	return &shortController{
-		path:    "/",
+func NewShortenApiController(config *config.AppConfig, r storage.Repository[uint64, storage.Record]) *shortenApiController {
+	return &shortenApiController{
+		path:    "/api/shorten",
 		service: shs.NewShortenerService(r),
 		config:  config,
 	}

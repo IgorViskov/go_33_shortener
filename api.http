@@ -2,7 +2,14 @@
 POST http://localhost:8080/
 Content-Type: text/plain
 
-https://practicum.yandex.ru/
+https://practicum.yandex.ru
+###
+POST http://localhost:8080/api/shorten
+Content-Type: application/json
+
+{
+  "url": "https://practicum.yandex.ru"
+}
 ###
 
 GET http://localhost:8080/qj
