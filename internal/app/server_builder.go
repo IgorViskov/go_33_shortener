@@ -4,25 +4,28 @@ import (
 	"errors"
 	"github.com/IgorViskov/go_33_shortener/internal/config"
 	"github.com/IgorViskov/go_33_shortener/internal/ex"
-	"github.com/emirpasic/gods/sets/hashset"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
+	"io"
 	"net/http"
 )
 
-var compressContentTypes = hashset.New("plain/text", "application/json", "application/x-gzip")
+var compressContentTypes = []string{"plain/text", "application/json", "application/x-gzip", "text/html"}
 
 type ServerBuilder struct {
 	controllers []Controller
 	middlewares []echo.MiddlewareFunc
 	router      *echo.Echo
+	app         *AppInstance
+	conf        *config.AppConfig
 }
 
 func Create() *ServerBuilder {
 	return &ServerBuilder{
 		controllers: make([]Controller, 0),
 		middlewares: make([]echo.MiddlewareFunc, 0),
+		app:         NewAppInstance(),
 	}
 }
 
@@ -43,15 +46,27 @@ func (cb *ServerBuilder) Use(m echo.MiddlewareFunc) *ServerBuilder {
 	return cb
 }
 
+func (cb *ServerBuilder) AddCloser(c io.Closer) *ServerBuilder {
+	cb.app.AddClosable(c)
+	return cb
+}
+
+func (cb *ServerBuilder) AddConfig(conf *config.AppConfig) *ServerBuilder {
+	cb.conf = conf
+	return cb
+}
+
 func (cb *ServerBuilder) UseCompression() *ServerBuilder {
 	cb.Use(middleware.GzipWithConfig(middleware.GzipConfig{
 		Skipper: func(c echo.Context) bool {
-			return !compressContentTypes.Contains(c.Request().Header.Get(echo.HeaderContentType))
+			h := c.Request().Header.Values(echo.HeaderContentType)
+			return !ex.AnyVales(&compressContentTypes, &h)
 		},
 	}))
 	cb.Use(middleware.DecompressWithConfig(middleware.DecompressConfig{
 		Skipper: func(c echo.Context) bool {
-			if ex.AnyString(compressContentTypes, c.Request().Header.Values(echo.HeaderContentType)) && (c.Request().Header.Get(echo.HeaderContentEncoding) == "gzip") {
+			h := c.Request().Header.Values(echo.HeaderContentType)
+			if ex.AnyVales(&compressContentTypes, &h) && (c.Request().Header.Get(echo.HeaderContentEncoding) == "gzip") {
 				return false
 			}
 			return true
@@ -62,8 +77,9 @@ func (cb *ServerBuilder) UseCompression() *ServerBuilder {
 }
 
 type Starting interface {
-	Start(conf *config.AppConfig)
+	Start() error
 	GetEcho() *echo.Echo
+	Close()
 }
 
 func (cb *ServerBuilder) Build() Starting {
@@ -84,25 +100,34 @@ func (cb *ServerBuilder) Build() Starting {
 	return cb
 }
 
-func (cb *ServerBuilder) Start(conf *config.AppConfig) {
-	if conf.HostName != conf.RedirectAddress.Host {
+func (cb *ServerBuilder) Start() error {
+	if cb.conf.HostName != cb.conf.RedirectAddress.Host {
 		go func() {
-			if err := http.ListenAndServe(conf.HostName, cb.router); !errors.Is(err, http.ErrServerClosed) {
+			if err := http.ListenAndServe(cb.conf.HostName, cb.router); !errors.Is(err, http.ErrServerClosed) {
 				log.Fatal(err)
 			}
-
 		}()
 
-		if err := http.ListenAndServe(conf.RedirectAddress.Host, cb.router); !errors.Is(err, http.ErrServerClosed) {
+		if err := http.ListenAndServe(cb.conf.RedirectAddress.Host, cb.router); !errors.Is(err, http.ErrServerClosed) {
 			log.Fatal(err)
+			return err
 		}
 	} else {
-		if err := cb.router.Start(conf.HostName); !errors.Is(err, http.ErrServerClosed) {
+		if err := cb.router.Start(cb.conf.HostName); !errors.Is(err, http.ErrServerClosed) {
 			log.Fatal(err)
+			return err
 		}
 	}
+	return nil
 }
 
 func (cb *ServerBuilder) GetEcho() *echo.Echo {
 	return cb.router
+}
+
+func (cb *ServerBuilder) Close() {
+	err := cb.app.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
 }

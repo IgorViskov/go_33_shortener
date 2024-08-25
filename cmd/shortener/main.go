@@ -9,6 +9,7 @@ import (
 	"github.com/IgorViskov/go_33_shortener/internal/log"
 	"github.com/IgorViskov/go_33_shortener/internal/storage"
 	"github.com/caarlos0/env/v11"
+	"github.com/xlab/closer"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -16,7 +17,9 @@ import (
 
 func main() {
 	conf := getConfig()
-	app.Create().Configure(configurator(conf)).Build().Start(conf)
+	builder := app.Create().Configure(configurator(conf)).Build()
+	closer.Bind(builder.Close)
+	closer.Checked(builder.Start, true)
 }
 
 func configurator(conf *config.AppConfig) app.ConfigureFunc {
@@ -25,11 +28,13 @@ func configurator(conf *config.AppConfig) app.ConfigureFunc {
 		if err != nil {
 			panic(err)
 		}
-		cb.UseCompression()
-		cb.Use(log.Logging())
-		cb.AddController(app.NewShortController(conf, s))
-		cb.AddController(app.NewUnShortController(conf, s))
-		cb.AddController(api.NewShortenAPIController(conf, s))
+		cb.AddConfig(conf).
+			UseCompression().
+			Use(log.Logging()).
+			AddController(app.NewShortController(conf, s)).
+			AddController(app.NewUnShortController(conf, s)).
+			AddController(api.NewShortenAPIController(conf, s)).
+			AddCloser(s)
 	}
 }
 
