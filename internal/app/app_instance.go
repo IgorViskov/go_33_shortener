@@ -1,6 +1,9 @@
 package app
 
-import "io"
+import (
+	"github.com/IgorViskov/go_33_shortener/internal/ex"
+	"io"
+)
 
 type AppInstance struct {
 	services []io.Closer
@@ -20,7 +23,7 @@ func (app *AppInstance) Close() error {
 			errors = append(errors, err)
 		}
 	}
-	return nil
+	return ex.AggregateErr(errors)
 }
 
 func (app *AppInstance) AddClosable(c io.Closer) {
