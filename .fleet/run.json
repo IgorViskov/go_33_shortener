@@ -1,0 +1,12 @@
+{
+    "configurations": [
+        {
+            "type": "go",
+            "name": "Go debug",
+            "workingDir": "C:/Projects/Shortener/go_33_shortener/",
+            "goExecPath": "C:/Program Files/Go/bin/go.exe",
+            "buildParams": ["$PROJECT_DIR$/cmd/shortener/main.go"],
+        },
+        
+    ]
+}

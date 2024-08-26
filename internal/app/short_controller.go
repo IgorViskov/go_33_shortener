@@ -6,11 +6,10 @@ import (
 	"github.com/IgorViskov/go_33_shortener/internal/errors"
 	"github.com/IgorViskov/go_33_shortener/internal/shs"
 	"github.com/IgorViskov/go_33_shortener/internal/storage"
+	"github.com/IgorViskov/go_33_shortener/internal/validation"
 	"github.com/labstack/echo/v4"
 	"io"
 	"net/http"
-	"net/url"
-	"strings"
 )
 
 type shortController struct {
@@ -29,7 +28,7 @@ func (c shortController) Post() func(context echo.Context) error {
 		if err != nil {
 			return err
 		}
-		u, okValidate := validateURL(string(body))
+		u, okValidate := validation.URL(string(body))
 		if !okValidate {
 			return errors.RiseError("Invalid URL")
 		}
@@ -52,19 +51,8 @@ func (c shortController) GetPath() string {
 
 func NewShortController(config *config.AppConfig, r storage.Repository[uint64, storage.Record]) *shortController {
 	return &shortController{
-		path:    "/*",
+		path:    "/",
 		service: shs.NewShortenerService(r),
 		config:  config,
 	}
-}
-
-func validateURL(u string) (string, bool) {
-	if len(strings.TrimSpace(u)) == 0 {
-		return "", false
-	}
-	p, err := url.Parse(u)
-	if err != nil || p.Scheme == "" || p.Host == "" {
-		return "", false
-	}
-	return u, true
 }
