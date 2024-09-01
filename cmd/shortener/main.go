@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"github.com/IgorViskov/go_33_shortener/internal/app"
 	"github.com/IgorViskov/go_33_shortener/internal/app/api"
+	"github.com/IgorViskov/go_33_shortener/internal/closer"
 	"github.com/IgorViskov/go_33_shortener/internal/config"
 	"github.com/IgorViskov/go_33_shortener/internal/log"
 	"github.com/IgorViskov/go_33_shortener/internal/storage"
 	"github.com/caarlos0/env/v11"
-	"github.com/xlab/closer"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -19,7 +19,8 @@ func main() {
 	conf := getConfig()
 	builder := app.Create().Configure(configurator(conf)).Build()
 	closer.Bind(builder.Close)
-	closer.Checked(builder.Start, true)
+	exitCode := closer.Checked(builder.Start)
+	os.Exit(exitCode)
 }
 
 func configurator(conf *config.AppConfig) app.ConfigureFunc {

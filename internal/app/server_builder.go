@@ -127,6 +127,7 @@ func (cb *ServerBuilder) GetEcho() *echo.Echo {
 
 func (cb *ServerBuilder) Close() {
 	err := cb.app.Close()
+	log.Printf("Close app by signal")
 	if err != nil {
 		log.Fatal(err)
 	}

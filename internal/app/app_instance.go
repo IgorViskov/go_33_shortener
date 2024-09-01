@@ -16,7 +16,7 @@ func NewAppInstance() *AppInstance {
 }
 
 func (app *AppInstance) Close() error {
-	errors := make([]error, len(app.services))
+	errors := make([]error, 0)
 	for _, closable := range app.services {
 		err := closable.Close()
 		if err != nil {
