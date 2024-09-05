@@ -25,3 +25,6 @@ Content-Type: text/plain
 
 /qweuoqiweuoiq_/*weu/kdalsdk;las?qweoipoq=73817
 
+###
+GET http://localhost:8080/ping
+Content-Type: text/plain

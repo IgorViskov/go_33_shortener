@@ -35,6 +35,7 @@ func configurator(conf *config.AppConfig) app.ConfigureFunc {
 			AddController(app.NewShortController(conf, s)).
 			AddController(app.NewUnShortController(conf, s)).
 			AddController(api.NewShortenAPIController(conf, s)).
+			AddController(api.NewPingAPIController(conf)).
 			AddCloser(s)
 	}
 }
@@ -61,6 +62,7 @@ func readFlags(conf *config.AppConfig) {
 	flag.Func("a", "Адрес запуска HTTP-сервера", config.HostNameParser(conf))
 	flag.Func("b", "Базовый адрес результирующего сокращённого URL", config.RedirectAddressParser(conf))
 	flag.Func("f", "Путь до файла с сохраненными адресами", config.StorageFileParser(conf))
+	flag.Func("d", "Путь до файла с сохраненными адресами", config.ConnectionStringParser(conf))
 	// запускаем парсинг
 	flag.Parse()
 }

@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/IgorViskov/go_33_shortener/internal/app"
 	"github.com/IgorViskov/go_33_shortener/internal/app/api/models"
 	"github.com/IgorViskov/go_33_shortener/internal/config"
 	"github.com/IgorViskov/go_33_shortener/internal/errors"
@@ -55,7 +56,7 @@ func (c shortenAPIController) GetPath() string {
 	return c.path
 }
 
-func NewShortenAPIController(config *config.AppConfig, r storage.Repository[uint64, storage.Record]) *shortenAPIController {
+func NewShortenAPIController(config *config.AppConfig, r storage.Repository[uint64, storage.Record]) app.Controller {
 	return &shortenAPIController{
 		path:    "/api/shorten",
 		service: shs.NewShortenerService(r),
