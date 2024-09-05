@@ -49,13 +49,11 @@ func newCloser() *closer {
 }
 
 func (c *closer) wait() {
-	select {
-	case <-c.signalChanel:
-		for _, fn := range c.cleanups {
-			fn()
-		}
-		c.exitChanel <- ExitCodeOK
+	<-c.signalChanel
+	for _, fn := range c.cleanups {
+		fn()
 	}
+	c.exitChanel <- ExitCodeOK
 }
 
 func (c *closer) closeErr() {
