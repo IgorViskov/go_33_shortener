@@ -1,9 +1,12 @@
 package storage
 
+import "context"
+
 type Repository[tid comparable, tentity any] interface {
-	Get(id tid) (*tentity, error)
-	Insert(entity *tentity) (*tentity, error)
-	Update(entity *tentity) (*tentity, error)
-	Delete(id tid) error
-	Find(search string) (*tentity, error)
+	Get(id tid, context ...context.Context) (*tentity, error)
+	Insert(entity *tentity, context ...context.Context) (*tentity, error)
+	Update(entity *tentity, context ...context.Context) (*tentity, error)
+	Delete(id tid, context ...context.Context) error
+	Find(search string, context ...context.Context) (*tentity, error)
+	Close() error
 }

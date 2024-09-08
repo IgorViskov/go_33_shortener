@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"github.com/IgorViskov/go_33_shortener/internal/concurrent"
 	"github.com/IgorViskov/go_33_shortener/internal/errors"
 	"sync/atomic"
@@ -17,7 +18,7 @@ func NewInMemoryStorage() *InMemoryStorage {
 	return s
 }
 
-func (i *InMemoryStorage) Get(id uint64) (*Record, error) {
+func (i *InMemoryStorage) Get(id uint64, _ ...context.Context) (*Record, error) {
 	val, ok := i.storage.Get(id)
 	if !ok {
 		return nil, errors.RiseError("Redirect URL not found")
@@ -25,24 +26,24 @@ func (i *InMemoryStorage) Get(id uint64) (*Record, error) {
 	return val, nil
 }
 
-func (i *InMemoryStorage) Insert(entity *Record) (*Record, error) {
+func (i *InMemoryStorage) Insert(entity *Record, _ ...context.Context) (*Record, error) {
 	id := i.current.Add(1)
 	entity.ID = id
 	i.storage.Set(id, entity)
 	return entity, nil
 }
 
-func (i *InMemoryStorage) Update(entity *Record) (*Record, error) {
+func (i *InMemoryStorage) Update(entity *Record, _ ...context.Context) (*Record, error) {
 	i.storage.Set(entity.ID, entity)
 	return entity, nil
 }
 
-func (i *InMemoryStorage) Delete(id uint64) error {
+func (i *InMemoryStorage) Delete(id uint64, _ ...context.Context) error {
 	i.storage.Remove(id)
 	return nil
 }
 
-func (i *InMemoryStorage) Find(search string) (*Record, error) {
+func (i *InMemoryStorage) Find(search string, _ ...context.Context) (*Record, error) {
 	exist, ok := i.storage.Find(&Record{Value: search}, func(f *Record, s *Record) bool {
 		return f.Value == s.Value
 	})
@@ -51,4 +52,8 @@ func (i *InMemoryStorage) Find(search string) (*Record, error) {
 	}
 	val, _ := i.storage.Get(*exist)
 	return val, nil
+}
+
+func (i *InMemoryStorage) Close() error {
+	return nil
 }

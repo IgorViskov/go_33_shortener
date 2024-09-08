@@ -2,6 +2,7 @@ package storage
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"github.com/IgorViskov/go_33_shortener/internal/algo"
 	"github.com/IgorViskov/go_33_shortener/internal/concurrent"
@@ -38,7 +39,7 @@ func NewHybridStorage(config *config.AppConfig) (*HybridStorage, error) {
 	return s, nil
 }
 
-func (s *HybridStorage) Get(id uint64) (*Record, error) {
+func (s *HybridStorage) Get(id uint64, _ ...context.Context) (*Record, error) {
 	val, ok := s.storage.Get(id)
 	if !ok {
 		return nil, errors.RiseError("Redirect URL not found")
@@ -46,7 +47,7 @@ func (s *HybridStorage) Get(id uint64) (*Record, error) {
 	return val, nil
 }
 
-func (s *HybridStorage) Insert(entity *Record) (*Record, error) {
+func (s *HybridStorage) Insert(entity *Record, _ ...context.Context) (*Record, error) {
 	id := s.current.Add(1)
 	entity.ID = id
 	s.storage.Set(id, entity)
@@ -59,17 +60,17 @@ func (s *HybridStorage) Insert(entity *Record) (*Record, error) {
 	return entity, nil
 }
 
-func (s *HybridStorage) Update(entity *Record) (*Record, error) {
+func (s *HybridStorage) Update(entity *Record, _ ...context.Context) (*Record, error) {
 	s.storage.Set(entity.ID, entity)
 	return entity, nil
 }
 
-func (s *HybridStorage) Delete(id uint64) error {
+func (s *HybridStorage) Delete(id uint64, _ ...context.Context) error {
 	s.storage.Remove(id)
 	return nil
 }
 
-func (s *HybridStorage) Find(search string) (*Record, error) {
+func (s *HybridStorage) Find(search string, _ ...context.Context) (*Record, error) {
 	exist, ok := s.storage.Find(&Record{Value: search}, func(f *Record, s *Record) bool {
 		return f.Value == s.Value
 	})

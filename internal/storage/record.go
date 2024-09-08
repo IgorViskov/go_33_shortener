@@ -36,3 +36,7 @@ func (r *RecordDto) MapToRecord() *Record {
 		Date:  time.Now(),
 	}
 }
+
+func (r *Record) Deconstruct() []interface{} {
+	return []interface{}{&r.ID, &r.Value, &r.Date}
+}

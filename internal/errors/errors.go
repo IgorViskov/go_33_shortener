@@ -21,3 +21,7 @@ func RiseError(message string) error {
 		Message:  message,
 	}
 }
+
+var (
+	NonImplemented = RiseError("Not Implemented")
+)

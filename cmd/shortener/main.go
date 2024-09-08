@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"github.com/IgorViskov/go_33_shortener/internal/app"
@@ -9,6 +10,7 @@ import (
 	"github.com/IgorViskov/go_33_shortener/internal/config"
 	"github.com/IgorViskov/go_33_shortener/internal/log"
 	"github.com/IgorViskov/go_33_shortener/internal/storage"
+	"github.com/IgorViskov/go_33_shortener/internal/storage/db"
 	"github.com/caarlos0/env/v11"
 	"net/url"
 	"os"
@@ -25,17 +27,15 @@ func main() {
 
 func configurator(conf *config.AppConfig) app.ConfigureFunc {
 	return func(cb *app.ServerBuilder) {
-		s, err := storage.NewHybridStorage(conf)
-		if err != nil {
-			panic(err)
-		}
+		connector := db.NewConnector(conf, context.Background())
+		s := selectStorage(connector, conf)
 		cb.AddConfig(conf).
 			UseCompression().
 			Use(log.Logging()).
 			AddController(app.NewShortController(conf, s)).
 			AddController(app.NewUnShortController(conf, s)).
 			AddController(api.NewShortenAPIController(conf, s)).
-			AddController(api.NewPingAPIController(conf)).
+			AddController(api.NewPingAPIController(connector)).
 			AddCloser(s)
 	}
 }
@@ -50,6 +50,7 @@ func getConfig() *config.AppConfig {
 		RedirectAddress: redirect,
 		HostName:        "localhost:8080",
 		StorageFile:     fmt.Sprintf("%s%c%s", getExecuteDir(), os.PathSeparator, "db.json"),
+		CacheSize:       10,
 	}
 
 	readFlags(conf)
@@ -77,4 +78,19 @@ func getExecuteDir() string {
 		panic(err)
 	}
 	return filepath.Dir(ex)
+}
+
+func selectStorage(connector db.Connector, conf *config.AppConfig) storage.Repository[uint64, storage.Record] {
+	if connector.TryConnected() {
+		return storage.NewDbStorage(connector, conf)
+	}
+	if conf.StorageFile != "" {
+		s, err := storage.NewHybridStorage(conf)
+		if err != nil {
+			panic(err)
+		}
+		return s
+	}
+
+	return storage.NewInMemoryStorage()
 }

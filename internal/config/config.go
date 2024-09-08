@@ -10,6 +10,7 @@ type AppConfig struct {
 	RedirectAddress  url.URL `env:"BASE_URL"`
 	StorageFile      string  `env:"FILE_STORAGE_PATH"`
 	ConnectionString string  `env:"DATABASE_DSN"`
+	CacheSize        int     `env:"CACHE_SIZE"`
 }
 
 func HostNameParser(conf *AppConfig) func(flagValue string) error {
