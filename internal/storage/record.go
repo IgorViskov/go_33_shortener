@@ -44,5 +44,5 @@ func (r *Record) Deconstruct() []interface{} {
 
 // TableName Имя таблицы для GORM
 func (Record) TableName() string {
-	return "ShortenUrls"
+	return "urls"
 }
