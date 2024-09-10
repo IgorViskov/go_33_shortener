@@ -6,9 +6,9 @@ import (
 )
 
 type Record struct {
-	ID    uint64
-	Value string
-	Date  time.Time
+	ID    uint64    `gorm:"column:ID;primary_key;auto_increment"`
+	Value string    `gorm:"column:Value"`
+	Date  time.Time `gorm:"column:Date"`
 }
 
 type RecordDto struct {
@@ -39,4 +39,9 @@ func (r *RecordDto) MapToRecord() *Record {
 
 func (r *Record) Deconstruct() []interface{} {
 	return []interface{}{&r.ID, &r.Value, &r.Date}
+}
+
+// TableName Имя таблицы для GORM
+func (Record) TableName() string {
+	return "ShortenUrls"
 }

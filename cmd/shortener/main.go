@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"github.com/IgorViskov/go_33_shortener/internal/app"
 	"github.com/IgorViskov/go_33_shortener/internal/app/api"
 	"github.com/IgorViskov/go_33_shortener/internal/closer"
@@ -11,6 +10,7 @@ import (
 	"github.com/IgorViskov/go_33_shortener/internal/log"
 	"github.com/IgorViskov/go_33_shortener/internal/storage"
 	"github.com/IgorViskov/go_33_shortener/internal/storage/db"
+	"github.com/IgorViskov/go_33_shortener/internal/storage/db/migrator"
 	"github.com/caarlos0/env/v11"
 	"net/url"
 	"os"
@@ -49,7 +49,6 @@ func getConfig() *config.AppConfig {
 	conf := &config.AppConfig{
 		RedirectAddress: redirect,
 		HostName:        "localhost:8080",
-		StorageFile:     fmt.Sprintf("%s%c%s", getExecuteDir(), os.PathSeparator, "db.json"),
 		CacheSize:       10,
 	}
 
@@ -81,8 +80,11 @@ func getExecuteDir() string {
 }
 
 func selectStorage(connector db.Connector, conf *config.AppConfig) storage.Repository[uint64, storage.Record] {
-	if connector.TryConnected() {
-		return storage.NewDbStorage(connector, conf)
+	if connector.IsConnected() {
+		if err := migrator.AutoMigrate(connector); err != nil {
+			log.Error(err)
+		}
+		return storage.NewDbStorage(connector)
 	}
 	if conf.StorageFile != "" {
 		s, err := storage.NewHybridStorage(conf)
