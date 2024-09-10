@@ -1,52 +1,58 @@
 package storage
 
 import (
+	"bitbucket.org/pcastools/hash"
 	"context"
 	"github.com/IgorViskov/go_33_shortener/internal/errors"
 	"github.com/IgorViskov/go_33_shortener/internal/storage/db"
 	"gorm.io/gorm"
 )
 
-type DbStorage struct {
+type DBStorage struct {
 	connector db.Connector
 }
 
-func NewDbStorage(connector db.Connector) *DbStorage {
-	return &DbStorage{
+func NewDBStorage(connector db.Connector) *DBStorage {
+	return &DBStorage{
 		connector: connector,
 	}
 }
 
-func (s *DbStorage) Get(id uint64, contexts ...context.Context) (*Record, error) {
+func (s *DBStorage) Get(id uint64, contexts ...context.Context) (*Record, error) {
 	session := s.getSession(contexts)
 	var r Record
 	err := session.First(&r, id).Error
 	return &r, err
 }
 
-func (s *DbStorage) Insert(entity *Record, contexts ...context.Context) (*Record, error) {
+func (s *DBStorage) Insert(entity *Record, contexts ...context.Context) (*Record, error) {
 	session := s.getSession(contexts)
+	hashed(entity)
 	err := session.Create(entity).Error
 	return entity, err
 }
 
-func (s *DbStorage) Update(entity *Record, contexts ...context.Context) (*Record, error) {
+func (s *DBStorage) Update(entity *Record, contexts ...context.Context) (*Record, error) {
 	return nil, errors.NonImplemented
 }
 
-func (s *DbStorage) Delete(id uint64, contexts ...context.Context) error {
+func (s *DBStorage) Delete(id uint64, contexts ...context.Context) error {
 	return errors.NonImplemented
 }
 
-func (s *DbStorage) Find(search string, contexts ...context.Context) (*Record, error) {
-	return nil, errors.NonImplemented
+func (s *DBStorage) Find(search string, contexts ...context.Context) (*Record, error) {
+	h := hash.String(search)
+	session := s.getSession(contexts)
+	var r Record
+	err := session.Where("\"Hash\" = $1", h).First(&r).Error
+	return &r, err
 }
 
-func (s *DbStorage) Close() error {
+func (s *DBStorage) Close() error {
 	return s.connector.Close()
 }
 
-func (s *DbStorage) getSession(c []context.Context) *gorm.DB {
+func (s *DBStorage) getSession(c []context.Context) *gorm.DB {
 	var session *gorm.DB
 	if len(c) > 0 {
 		session = s.connector.GetConnection().Session(&gorm.Session{
@@ -57,4 +63,10 @@ func (s *DbStorage) getSession(c []context.Context) *gorm.DB {
 	}
 
 	return session
+}
+
+func hashed(r *Record) {
+	if r.Hash == 0 {
+		r.Hash = hash.String(r.Value)
+	}
 }

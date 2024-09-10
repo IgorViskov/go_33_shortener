@@ -3,6 +3,7 @@ module github.com/IgorViskov/go_33_shortener
 go 1.22.6
 
 require (
+	bitbucket.org/pcastools/hash v1.0.5 // indirect
 	github.com/caarlos0/env/v11 v11.2.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect

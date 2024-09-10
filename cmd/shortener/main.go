@@ -84,7 +84,7 @@ func selectStorage(connector db.Connector, conf *config.AppConfig) storage.Repos
 		if err := migrator.AutoMigrate(connector); err != nil {
 			log.Error(err)
 		}
-		return storage.NewDbStorage(connector)
+		return storage.NewDBStorage(connector)
 	}
 	if conf.StorageFile != "" {
 		s, err := storage.NewHybridStorage(conf)
