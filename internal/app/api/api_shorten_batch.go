@@ -39,15 +39,17 @@ func (c shortenBatchAPIController) Post() func(context echo.Context) error {
 			log.Error(err)
 		}
 
+		result := make([]models.ShortBatchItemDto, len(shorted))
 		for _, r := range shorted {
 			redirect := c.config.RedirectAddress
 			redirect.Path = fmt.Sprintf("%s/%s", redirect.Path, shorted)
 			r.ShortURL = redirect.String()
+			result = append(result, r)
 		}
 
 		context.Response().Header().Add("Content-Type", "application/json")
 		context.Response().Status = http.StatusCreated
-		return json.NewEncoder(context.Response()).Encode(&shorted)
+		return json.NewEncoder(context.Response()).Encode(&result)
 	}
 }
 
