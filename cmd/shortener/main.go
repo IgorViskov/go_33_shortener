@@ -36,6 +36,7 @@ func configurator(conf *config.AppConfig) app.ConfigureFunc {
 			AddController(app.NewUnShortController(conf, s)).
 			AddController(api.NewShortenAPIController(conf, s)).
 			AddController(api.NewPingAPIController(connector)).
+			AddController(api.NewShortenBatchAPIController(conf, s)).
 			AddCloser(s)
 	}
 }

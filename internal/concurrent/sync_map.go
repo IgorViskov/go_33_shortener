@@ -1,6 +1,7 @@
 package concurrent
 
 import (
+	"github.com/IgorViskov/go_33_shortener/internal/errors"
 	"sync"
 )
 
@@ -44,6 +45,29 @@ func (c *SyncMap[Key, Value]) Find(searchedItem Value, comparator func(Value, Va
 		}
 	}
 	return nil, false
+}
+
+func (c *SyncMap[Key, Value]) TryAdd(value Value, keygen func() Key, comparator func(Value, Value) bool) (Value, bool) {
+	c.mx.Lock()
+	defer c.mx.Unlock()
+	if comparator == nil {
+		panic(errors.ComparatorNotFound)
+	}
+	for _, v := range c.m {
+		if comparator(v, value) {
+			return v, false
+		}
+	}
+	c.m[keygen()] = value
+	return value, true
+}
+
+func (c *SyncMap[Key, Value]) AddRange(values []Value, keyExtractor func(Value) Key) {
+	c.mx.Lock()
+	defer c.mx.Unlock()
+	for _, v := range values {
+		c.m[keyExtractor(v)] = v
+	}
 }
 
 func NewSyncMap[Key comparable, Value any]() *SyncMap[Key, Value] {

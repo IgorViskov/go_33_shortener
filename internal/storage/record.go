@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"bitbucket.org/pcastools/hash"
 	"strconv"
 	"time"
 )
@@ -45,4 +46,10 @@ func (r *Record) Deconstruct() []interface{} {
 // TableName Имя таблицы для GORM
 func (Record) TableName() string {
 	return "urls"
+}
+
+func hashed(r *Record) {
+	if r.Hash == 0 {
+		r.Hash = hash.String(r.Value)
+	}
 }

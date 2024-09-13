@@ -33,3 +33,19 @@ func GetContext(args []context.Context) context.Context {
 	}
 	return context.Background()
 }
+
+func ToMap[TKey comparable, TSource any](source []TSource, selector func(TSource) TKey) map[TKey]TSource {
+	result := make(map[TKey]TSource, len(source))
+	for _, s := range source {
+		result[selector(s)] = s
+	}
+	return result
+}
+
+func Map[TSource any, TResult any](source []TSource, selector func(TSource) TResult) []TResult {
+	result := make([]TResult, len(source))
+	for i := range source {
+		result[i] = selector(source[i])
+	}
+	return result
+}

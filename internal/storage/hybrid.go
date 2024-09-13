@@ -48,16 +48,40 @@ func (s *HybridStorage) Get(id uint64, _ ...context.Context) (*Record, error) {
 }
 
 func (s *HybridStorage) Insert(entity *Record, _ ...context.Context) (*Record, error) {
-	id := s.current.Add(1)
+	hashed(entity)
+	var id uint64
+	exist, added := s.storage.TryAdd(entity, func() uint64 {
+		id = s.current.Add(1)
+		return id
+	}, func(r1 *Record, r2 *Record) bool {
+		return r1.Hash == r2.Hash
+	})
+	if !added {
+		return exist, nil
+	}
 	entity.ID = id
-	s.storage.Set(id, entity)
-
 	err := s.save(entity)
 	if err != nil {
 		return nil, err
 	}
 
 	return entity, nil
+}
+
+func (s *HybridStorage) BatchGetOrInsert(entities []Record, contexts ...context.Context) ([]Record, []error) {
+	result := make([]Record, len(entities))
+	err := make([]error, len(entities))
+	for _, e := range entities {
+
+		added, e := s.Insert(&e, contexts...)
+		if e != nil {
+			err = append(err, e)
+		} else {
+			result = append(result, *added)
+		}
+	}
+
+	return result, err
 }
 
 func (s *HybridStorage) Update(entity *Record, _ ...context.Context) (*Record, error) {
