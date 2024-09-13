@@ -14,7 +14,6 @@ import (
 	"github.com/caarlos0/env/v11"
 	"net/url"
 	"os"
-	"path/filepath"
 )
 
 func main() {
@@ -70,14 +69,6 @@ func readFlags(conf *config.AppConfig) {
 
 func readEnvironments(conf *config.AppConfig) {
 	_ = env.Parse(conf)
-}
-
-func getExecuteDir() string {
-	ex, err := os.Executable()
-	if err != nil {
-		panic(err)
-	}
-	return filepath.Dir(ex)
 }
 
 func selectStorage(connector db.Connector, conf *config.AppConfig) storage.Repository[uint64, storage.Record] {

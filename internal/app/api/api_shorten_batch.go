@@ -56,7 +56,7 @@ func (c shortenBatchAPIController) GetPath() string {
 }
 
 func NewShortenBatchAPIController(config *config.AppConfig, r storage.Repository[uint64, storage.Record]) app.Controller {
-	return &shortenAPIController{
+	return &shortenBatchAPIController{
 		path:    "/api/shorten",
 		service: shs.NewShortenerService(r),
 		config:  config,
