@@ -34,8 +34,8 @@ func (i *InMemoryStorage) Insert(entity *Record, _ ...context.Context) (*Record,
 }
 
 func (i *InMemoryStorage) BatchGetOrInsert(entities []Record, contexts ...context.Context) ([]Record, []error) {
-	result := make([]Record, len(entities))
-	err := make([]error, len(entities))
+	result := make([]Record, 0, len(entities))
+	err := make([]error, 0, len(entities))
 	for _, e := range entities {
 
 		added, e := i.Insert(&e, contexts...)

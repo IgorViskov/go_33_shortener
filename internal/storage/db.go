@@ -38,7 +38,7 @@ func (s *DBStorage) BatchGetOrInsert(entities []Record, contexts ...context.Cont
 	session.Begin(&sql.TxOptions{
 		Isolation: sql.LevelRepeatableRead,
 	})
-	err := make([]error, len(entities))
+	err := make([]error, 0, len(entities))
 	for _, entity := range entities {
 		hashed(&entity)
 		e := session.FirstOrCreate(&entity, Record{Hash: entity.Hash}).Error

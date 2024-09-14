@@ -43,7 +43,7 @@ func (c shortenBatchAPIController) Post() func(context echo.Context) error {
 			log.Error(err)
 		}
 
-		result := make([]models.ShortBatchItemDto, len(shorted))
+		result := make([]models.ShortBatchItemDto, 0, len(shorted))
 		for _, r := range shorted {
 			redirect := c.config.RedirectAddress
 			redirect.Path = fmt.Sprintf("%s/%s", redirect.Path, shorted)

@@ -42,9 +42,10 @@ func (s *ShortenerService) BatchShort(batch []models.ShortenBatchItemDto) ([]mod
 			Date:  time.Now(),
 		}
 	})
-	entities, err := s.repository.BatchGetOrInsert(records)
-	if err != nil {
-		return nil, errors.Combine("; ", err...)
+	entities, errs := s.repository.BatchGetOrInsert(records)
+	var err error = nil
+	if errs != nil && len(errs) > 0 {
+		err = errors.Combine("; ", errs...)
 	}
 
 	result := ex.Map(entities, func(r storage.Record) models.ShortBatchItemDto {
@@ -53,7 +54,7 @@ func (s *ShortenerService) BatchShort(batch []models.ShortenBatchItemDto) ([]mod
 			ShortURL:      algo.Encode(r.ID),
 		}
 	})
-	return result, nil
+	return result, err
 }
 
 func (s *ShortenerService) UnShort(token string) (string, error) {
