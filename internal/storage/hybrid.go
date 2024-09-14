@@ -68,16 +68,16 @@ func (s *HybridStorage) Insert(entity *Record, _ ...context.Context) (*Record, e
 	return entity, nil
 }
 
-func (s *HybridStorage) BatchGetOrInsert(entities []Record, contexts ...context.Context) ([]Record, []error) {
-	result := make([]Record, 0, len(entities))
+func (s *HybridStorage) BatchGetOrInsert(entities []*Record, contexts ...context.Context) ([]*Record, []error) {
+	result := make([]*Record, 0, len(entities))
 	err := make([]error, 0, len(entities))
 	for _, e := range entities {
 
-		added, e := s.Insert(&e, contexts...)
+		added, e := s.Insert(e, contexts...)
 		if e != nil {
 			err = append(err, e)
 		} else {
-			result = append(result, *added)
+			result = append(result, added)
 		}
 	}
 

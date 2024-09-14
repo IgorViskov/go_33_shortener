@@ -36,8 +36,8 @@ func (s *ShortenerService) Short(url string) (string, error) {
 
 func (s *ShortenerService) BatchShort(batch []models.ShortenBatchItemDto) ([]models.ShortBatchItemDto, error) {
 	dtos := ex.ToMap(batch, func(v models.ShortenBatchItemDto) string { return v.OriginalURL })
-	records := ex.Map(batch, func(so models.ShortenBatchItemDto) storage.Record {
-		return storage.Record{
+	records := ex.Map(batch, func(so models.ShortenBatchItemDto) *storage.Record {
+		return &storage.Record{
 			Value: so.OriginalURL,
 			Date:  time.Now(),
 		}
@@ -48,7 +48,7 @@ func (s *ShortenerService) BatchShort(batch []models.ShortenBatchItemDto) ([]mod
 		err = errors.Combine("; ", errs...)
 	}
 
-	result := ex.Map(entities, func(r storage.Record) models.ShortBatchItemDto {
+	result := ex.Map(entities, func(r *storage.Record) models.ShortBatchItemDto {
 		return models.ShortBatchItemDto{
 			CorrelationID: dtos[r.Value].CorrelationID,
 			ShortURL:      algo.Encode(r.ID),

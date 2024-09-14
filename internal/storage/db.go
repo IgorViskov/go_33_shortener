@@ -33,15 +33,15 @@ func (s *DBStorage) Insert(entity *Record, contexts ...context.Context) (*Record
 	return entity, err
 }
 
-func (s *DBStorage) BatchGetOrInsert(entities []Record, contexts ...context.Context) ([]Record, []error) {
+func (s *DBStorage) BatchGetOrInsert(entities []*Record, contexts ...context.Context) ([]*Record, []error) {
 	session := s.getSession(contexts)
 	session.Begin(&sql.TxOptions{
 		Isolation: sql.LevelRepeatableRead,
 	})
 	err := make([]error, 0, len(entities))
 	for _, entity := range entities {
-		hashed(&entity)
-		e := session.FirstOrCreate(&entity, Record{Hash: entity.Hash}).Error
+		hashed(entity)
+		e := session.FirstOrCreate(entity, Record{Hash: entity.Hash}).Error
 		if e != nil {
 			err = append(err, e)
 		}
