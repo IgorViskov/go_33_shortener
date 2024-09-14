@@ -44,7 +44,7 @@ func (s *ShortenerService) BatchShort(batch []models.ShortenBatchItemDto) ([]mod
 	})
 	entities, errs := s.repository.BatchGetOrInsert(records)
 	var err error = nil
-	if errs != nil && len(errs) > 0 {
+	if len(errs) > 0 {
 		err = errors.Combine("; ", errs...)
 	}
 
