@@ -8,7 +8,7 @@ import (
 
 type Record struct {
 	ID    uint64    `gorm:"column:ID;primary_key;auto_increment"`
-	Value string    `gorm:"column:Value"`
+	Value string    `gorm:"column:Value;unique"`
 	Date  time.Time `gorm:"column:Date"`
 	Hash  uint32    `gorm:"column:Hash;index"`
 }

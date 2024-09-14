@@ -1,8 +1,8 @@
-package errors
+package appErrors
 
 import (
+	"errors"
 	"fmt"
-	"strings"
 	"time"
 )
 
@@ -23,22 +23,9 @@ func RiseError(message string) error {
 	}
 }
 
-func Combine(separator string, err ...error) error {
-	var sb strings.Builder
-	l := len(err)
-	for i, e := range err {
-		if e == nil {
-			continue
-		}
-		sb.WriteString(e.Error())
-		if i < l-1 {
-			sb.WriteString(separator)
-		}
-	}
-	return RiseError(sb.String())
-}
-
 var (
 	NonImplemented     = RiseError("Not Implemented")
 	ComparatorNotFound = RiseError("Comparator not found")
 )
+
+var InsertConflict = errors.New("insert conflict")

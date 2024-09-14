@@ -2,8 +2,8 @@ package storage
 
 import (
 	"context"
+	"github.com/IgorViskov/go_33_shortener/internal/appErrors"
 	"github.com/IgorViskov/go_33_shortener/internal/concurrent"
-	"github.com/IgorViskov/go_33_shortener/internal/errors"
 	"sync/atomic"
 )
 
@@ -21,15 +21,24 @@ func NewInMemoryStorage() *InMemoryStorage {
 func (i *InMemoryStorage) Get(id uint64, _ ...context.Context) (*Record, error) {
 	val, ok := i.storage.Get(id)
 	if !ok {
-		return nil, errors.RiseError("Redirect URL not found")
+		return nil, appErrors.RiseError("Redirect URL not found")
 	}
 	return val, nil
 }
 
 func (i *InMemoryStorage) Insert(entity *Record, _ ...context.Context) (*Record, error) {
-	id := i.current.Add(1)
+	hashed(entity)
+	var id uint64
+	exist, added := i.storage.TryAdd(entity, func() uint64 {
+		id = i.current.Add(1)
+		return id
+	}, func(r1 *Record, r2 *Record) bool {
+		return r1.Hash == r2.Hash
+	})
+	if !added {
+		return exist, appErrors.InsertConflict
+	}
 	entity.ID = id
-	i.storage.Set(id, entity)
 	return entity, nil
 }
 
@@ -64,7 +73,7 @@ func (i *InMemoryStorage) Find(search string, _ ...context.Context) (*Record, er
 		return f.Value == s.Value
 	})
 	if !ok {
-		return nil, errors.RiseError("Record not found")
+		return nil, appErrors.RiseError("Record not found")
 	}
 	val, _ := i.storage.Get(*exist)
 	return val, nil

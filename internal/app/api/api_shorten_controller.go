@@ -2,11 +2,12 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/IgorViskov/go_33_shortener/internal/app"
 	"github.com/IgorViskov/go_33_shortener/internal/app/api/models"
+	"github.com/IgorViskov/go_33_shortener/internal/appErrors"
 	"github.com/IgorViskov/go_33_shortener/internal/config"
-	"github.com/IgorViskov/go_33_shortener/internal/errors"
 	"github.com/IgorViskov/go_33_shortener/internal/shs"
 	"github.com/IgorViskov/go_33_shortener/internal/storage"
 	"github.com/IgorViskov/go_33_shortener/internal/validation"
@@ -29,16 +30,21 @@ func (c shortenAPIController) Post() func(context echo.Context) error {
 		var dto models.ShortenDto
 		err := context.Bind(&dto)
 		if err != nil {
-			return errors.RiseError("Invalid json")
+			return appErrors.RiseError("Invalid json")
 		}
 		u, okValidate := validation.URL(dto.URL)
 		if !okValidate {
-			return errors.RiseError("Invalid URL")
+			return appErrors.RiseError("Invalid URL")
 		}
 		shorted, err := c.service.Short(u)
 
+		status := http.StatusCreated
 		if err != nil {
-			return err
+			if errors.Is(err, appErrors.InsertConflict) {
+				status = http.StatusConflict
+			} else {
+				return err
+			}
 		}
 
 		redirect := c.config.RedirectAddress
@@ -47,7 +53,7 @@ func (c shortenAPIController) Post() func(context echo.Context) error {
 		responseDto := new(models.ShortDto)
 		responseDto.Result = redirect.String()
 		context.Response().Header().Add("Content-Type", "application/json")
-		context.Response().Status = http.StatusCreated
+		context.Response().Status = status
 		return json.NewEncoder(context.Response()).Encode(&responseDto)
 	}
 }

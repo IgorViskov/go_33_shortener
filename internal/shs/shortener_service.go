@@ -1,9 +1,9 @@
 package shs
 
 import (
+	"errors"
 	"github.com/IgorViskov/go_33_shortener/internal/algo"
 	"github.com/IgorViskov/go_33_shortener/internal/app/api/models"
-	"github.com/IgorViskov/go_33_shortener/internal/errors"
 	"github.com/IgorViskov/go_33_shortener/internal/ex"
 	"github.com/IgorViskov/go_33_shortener/internal/storage"
 	"time"
@@ -20,18 +20,15 @@ func NewShortenerService(r storage.Repository[uint64, storage.Record]) *Shortene
 }
 
 func (s *ShortenerService) Short(url string) (string, error) {
-	exist, err := s.repository.Find(url)
-	if err != nil {
-		exist, err = s.repository.Insert(&storage.Record{
-			Value: url,
-			Date:  time.Now(),
-		})
-		if err != nil {
-			return "", err
-		}
+	rec, err := s.repository.Insert(&storage.Record{
+		Value: url,
+		Date:  time.Now(),
+	})
+	if rec == nil {
+		return "", err
 	}
-	short := algo.Encode(exist.ID)
-	return short, nil
+	short := algo.Encode(rec.ID)
+	return short, err
 }
 
 func (s *ShortenerService) BatchShort(batch []models.ShortenBatchItemDto) ([]models.ShortBatchItemDto, error) {
@@ -45,7 +42,7 @@ func (s *ShortenerService) BatchShort(batch []models.ShortenBatchItemDto) ([]mod
 	entities, errs := s.repository.BatchGetOrInsert(records)
 	var err error = nil
 	if len(errs) > 0 {
-		err = errors.Combine("; ", errs...)
+		err = errors.Join(errs...)
 	}
 
 	result := ex.Map(entities, func(r *storage.Record) models.ShortBatchItemDto {

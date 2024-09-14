@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/IgorViskov/go_33_shortener/internal/app"
 	"github.com/IgorViskov/go_33_shortener/internal/app/api/models"
+	"github.com/IgorViskov/go_33_shortener/internal/appErrors"
 	"github.com/IgorViskov/go_33_shortener/internal/config"
-	"github.com/IgorViskov/go_33_shortener/internal/errors"
 	"github.com/IgorViskov/go_33_shortener/internal/log"
 	"github.com/IgorViskov/go_33_shortener/internal/shs"
 	"github.com/IgorViskov/go_33_shortener/internal/storage"
@@ -32,7 +32,7 @@ func (c shortenBatchAPIController) Post() func(context echo.Context) error {
 		context.Response().Header().Add("Content-Type", "application/json")
 
 		if err != nil {
-			return errors.RiseError("Invalid json")
+			return appErrors.RiseError("Invalid json")
 		}
 
 		shorted, err := c.service.BatchShort(dtos)

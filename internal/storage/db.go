@@ -4,7 +4,7 @@ import (
 	"bitbucket.org/pcastools/hash"
 	"context"
 	"database/sql"
-	"github.com/IgorViskov/go_33_shortener/internal/errors"
+	"github.com/IgorViskov/go_33_shortener/internal/appErrors"
 	"github.com/IgorViskov/go_33_shortener/internal/storage/db"
 	"gorm.io/gorm"
 )
@@ -29,7 +29,14 @@ func (s *DBStorage) Get(id uint64, contexts ...context.Context) (*Record, error)
 func (s *DBStorage) Insert(entity *Record, contexts ...context.Context) (*Record, error) {
 	session := s.getSession(contexts)
 	hashed(entity)
-	err := session.Create(entity).Error
+	result := session.FirstOrCreate(entity, Record{Hash: entity.Hash})
+	err := result.Error
+	if err != nil {
+		return entity, err
+	}
+	if result.RowsAffected == 0 {
+		err = appErrors.InsertConflict
+	}
 	return entity, err
 }
 
@@ -52,11 +59,11 @@ func (s *DBStorage) BatchGetOrInsert(entities []*Record, contexts ...context.Con
 }
 
 func (s *DBStorage) Update(entity *Record, contexts ...context.Context) (*Record, error) {
-	return nil, errors.NonImplemented
+	return nil, appErrors.NonImplemented
 }
 
 func (s *DBStorage) Delete(id uint64, contexts ...context.Context) error {
-	return errors.NonImplemented
+	return appErrors.NonImplemented
 }
 
 func (s *DBStorage) Find(search string, contexts ...context.Context) (*Record, error) {
