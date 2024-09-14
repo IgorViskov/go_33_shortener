@@ -6,6 +6,7 @@ import (
 	"github.com/IgorViskov/go_33_shortener/internal/app"
 	"github.com/IgorViskov/go_33_shortener/internal/app/api/models"
 	"github.com/IgorViskov/go_33_shortener/internal/config"
+	"github.com/IgorViskov/go_33_shortener/internal/errors"
 	"github.com/IgorViskov/go_33_shortener/internal/log"
 	"github.com/IgorViskov/go_33_shortener/internal/shs"
 	"github.com/IgorViskov/go_33_shortener/internal/storage"
@@ -26,9 +27,12 @@ func (c shortenBatchAPIController) Get() func(context echo.Context) error {
 func (c shortenBatchAPIController) Post() func(context echo.Context) error {
 	return func(context echo.Context) error {
 		var dtos []models.ShortenBatchItemDto
-		err := context.Bind(dtos)
+		err := context.Bind(&dtos)
+
+		context.Response().Header().Add("Content-Type", "application/json")
+
 		if err != nil {
-			return context.String(http.StatusBadRequest, "Invalid json")
+			return errors.RiseError("Invalid json")
 		}
 
 		shorted, err := c.service.BatchShort(dtos)
@@ -59,7 +63,7 @@ func (c shortenBatchAPIController) GetPath() string {
 
 func NewShortenBatchAPIController(config *config.AppConfig, r storage.Repository[uint64, storage.Record]) app.Controller {
 	return &shortenBatchAPIController{
-		path:    "/api/shorten",
+		path:    "/api/shorten/batch",
 		service: shs.NewShortenerService(r),
 		config:  config,
 	}

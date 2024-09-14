@@ -29,7 +29,7 @@ func (c shortenAPIController) Post() func(context echo.Context) error {
 		var dto models.ShortenDto
 		err := context.Bind(&dto)
 		if err != nil {
-			return context.String(http.StatusBadRequest, "Invalid json")
+			return errors.RiseError("Invalid json")
 		}
 		u, okValidate := validation.URL(dto.URL)
 		if !okValidate {

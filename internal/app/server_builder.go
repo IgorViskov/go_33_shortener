@@ -85,6 +85,12 @@ type Starting interface {
 func (cb *ServerBuilder) Build() Starting {
 	cb.router = echo.New()
 
+	//cb.router.HTTPErrorHandler = func(err error, c echo.Context) {
+	//	if echo.Response.Header().Get(echo.HeaderContentType) == echo.MIMEApplicationJavaScript {
+	//		echo.Response.Write()
+	//	}
+	//}
+
 	for _, m := range cb.middlewares {
 		cb.router.Use(m)
 	}
