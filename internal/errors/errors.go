@@ -27,6 +27,9 @@ func Combine(separator string, err ...error) error {
 	var sb strings.Builder
 	l := len(err)
 	for i, e := range err {
+		if e == nil {
+			continue
+		}
 		sb.WriteString(e.Error())
 		if i < l-1 {
 			sb.WriteString(separator)
