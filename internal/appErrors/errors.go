@@ -28,4 +28,4 @@ var (
 	ComparatorNotFound = RiseError("Comparator not found")
 )
 
-var InsertConflict = errors.New("insert conflict")
+var ErrInsertConflict = errors.New("insert conflict")

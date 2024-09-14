@@ -57,7 +57,7 @@ func (s *HybridStorage) Insert(entity *Record, _ ...context.Context) (*Record, e
 		return r1.Hash == r2.Hash
 	})
 	if !added {
-		return exist, appErrors.InsertConflict
+		return exist, appErrors.ErrInsertConflict
 	}
 	entity.ID = id
 	err := s.save(entity)

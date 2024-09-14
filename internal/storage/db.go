@@ -35,7 +35,7 @@ func (s *DBStorage) Insert(entity *Record, contexts ...context.Context) (*Record
 		return entity, err
 	}
 	if result.RowsAffected == 0 {
-		err = appErrors.InsertConflict
+		err = appErrors.ErrInsertConflict
 	}
 	return entity, err
 }

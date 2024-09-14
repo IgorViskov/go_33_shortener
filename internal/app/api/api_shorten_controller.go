@@ -40,7 +40,7 @@ func (c shortenAPIController) Post() func(context echo.Context) error {
 
 		status := http.StatusCreated
 		if err != nil {
-			if errors.Is(err, appErrors.InsertConflict) {
+			if errors.Is(err, appErrors.ErrInsertConflict) {
 				status = http.StatusConflict
 			} else {
 				return err

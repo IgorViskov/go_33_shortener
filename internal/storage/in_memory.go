@@ -36,7 +36,7 @@ func (i *InMemoryStorage) Insert(entity *Record, _ ...context.Context) (*Record,
 		return r1.Hash == r2.Hash
 	})
 	if !added {
-		return exist, appErrors.InsertConflict
+		return exist, appErrors.ErrInsertConflict
 	}
 	entity.ID = id
 	return entity, nil
