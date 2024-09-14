@@ -1,7 +1,7 @@
 package concurrent
 
 import (
-	"github.com/IgorViskov/go_33_shortener/internal/appErrors"
+	"github.com/IgorViskov/go_33_shortener/internal/apperrors"
 	"sync"
 )
 
@@ -51,7 +51,7 @@ func (c *SyncMap[Key, Value]) TryAdd(value Value, keygen func() Key, comparator 
 	c.mx.Lock()
 	defer c.mx.Unlock()
 	if comparator == nil {
-		panic(appErrors.ComparatorNotFound)
+		panic(apperrors.ComparatorNotFound)
 	}
 	for _, v := range c.m {
 		if comparator(v, value) {

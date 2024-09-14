@@ -4,7 +4,7 @@ import (
 	"bitbucket.org/pcastools/hash"
 	"context"
 	"database/sql"
-	"github.com/IgorViskov/go_33_shortener/internal/appErrors"
+	"github.com/IgorViskov/go_33_shortener/internal/apperrors"
 	"github.com/IgorViskov/go_33_shortener/internal/storage/db"
 	"gorm.io/gorm"
 )
@@ -35,7 +35,7 @@ func (s *DBStorage) Insert(entity *Record, contexts ...context.Context) (*Record
 		return entity, err
 	}
 	if result.RowsAffected == 0 {
-		err = appErrors.ErrInsertConflict
+		err = apperrors.ErrInsertConflict
 	}
 	return entity, err
 }
@@ -59,11 +59,11 @@ func (s *DBStorage) BatchGetOrInsert(entities []*Record, contexts ...context.Con
 }
 
 func (s *DBStorage) Update(entity *Record, contexts ...context.Context) (*Record, error) {
-	return nil, appErrors.NonImplemented
+	return nil, apperrors.NonImplemented
 }
 
 func (s *DBStorage) Delete(id uint64, contexts ...context.Context) error {
-	return appErrors.NonImplemented
+	return apperrors.NonImplemented
 }
 
 func (s *DBStorage) Find(search string, contexts ...context.Context) (*Record, error) {

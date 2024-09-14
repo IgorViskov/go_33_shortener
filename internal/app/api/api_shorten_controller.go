@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/IgorViskov/go_33_shortener/internal/app"
 	"github.com/IgorViskov/go_33_shortener/internal/app/api/models"
-	"github.com/IgorViskov/go_33_shortener/internal/appErrors"
+	"github.com/IgorViskov/go_33_shortener/internal/apperrors"
 	"github.com/IgorViskov/go_33_shortener/internal/config"
 	"github.com/IgorViskov/go_33_shortener/internal/shs"
 	"github.com/IgorViskov/go_33_shortener/internal/storage"
@@ -30,17 +30,17 @@ func (c shortenAPIController) Post() func(context echo.Context) error {
 		var dto models.ShortenDto
 		err := context.Bind(&dto)
 		if err != nil {
-			return appErrors.RiseError("Invalid json")
+			return apperrors.RiseError("Invalid json")
 		}
 		u, okValidate := validation.URL(dto.URL)
 		if !okValidate {
-			return appErrors.RiseError("Invalid URL")
+			return apperrors.RiseError("Invalid URL")
 		}
 		shorted, err := c.service.Short(u)
 
 		status := http.StatusCreated
 		if err != nil {
-			if errors.Is(err, appErrors.ErrInsertConflict) {
+			if errors.Is(err, apperrors.ErrInsertConflict) {
 				status = http.StatusConflict
 			} else {
 				return err

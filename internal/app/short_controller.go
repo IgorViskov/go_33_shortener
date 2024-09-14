@@ -3,7 +3,7 @@ package app
 import (
 	"errors"
 	"fmt"
-	"github.com/IgorViskov/go_33_shortener/internal/appErrors"
+	"github.com/IgorViskov/go_33_shortener/internal/apperrors"
 	"github.com/IgorViskov/go_33_shortener/internal/config"
 	"github.com/IgorViskov/go_33_shortener/internal/shs"
 	"github.com/IgorViskov/go_33_shortener/internal/storage"
@@ -31,13 +31,13 @@ func (c shortController) Post() func(context echo.Context) error {
 		}
 		u, okValidate := validation.URL(string(body))
 		if !okValidate {
-			return appErrors.RiseError("Invalid URL")
+			return apperrors.RiseError("Invalid URL")
 		}
 		shorted, err := c.service.Short(u)
 
 		status := http.StatusCreated
 		if err != nil {
-			if errors.Is(err, appErrors.ErrInsertConflict) {
+			if errors.Is(err, apperrors.ErrInsertConflict) {
 				status = http.StatusConflict
 			} else {
 				return err

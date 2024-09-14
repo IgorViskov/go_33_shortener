@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/IgorViskov/go_33_shortener/internal/algo"
-	"github.com/IgorViskov/go_33_shortener/internal/appErrors"
+	"github.com/IgorViskov/go_33_shortener/internal/apperrors"
 	"github.com/IgorViskov/go_33_shortener/internal/concurrent"
 	"github.com/IgorViskov/go_33_shortener/internal/config"
 	"os"
@@ -42,7 +42,7 @@ func NewHybridStorage(config *config.AppConfig) (*HybridStorage, error) {
 func (s *HybridStorage) Get(id uint64, _ ...context.Context) (*Record, error) {
 	val, ok := s.storage.Get(id)
 	if !ok {
-		return nil, appErrors.RiseError("Redirect URL not found")
+		return nil, apperrors.RiseError("Redirect URL not found")
 	}
 	return val, nil
 }
@@ -57,7 +57,7 @@ func (s *HybridStorage) Insert(entity *Record, _ ...context.Context) (*Record, e
 		return r1.Hash == r2.Hash
 	})
 	if !added {
-		return exist, appErrors.ErrInsertConflict
+		return exist, apperrors.ErrInsertConflict
 	}
 	entity.ID = id
 	err := s.save(entity)
@@ -99,7 +99,7 @@ func (s *HybridStorage) Find(search string, _ ...context.Context) (*Record, erro
 		return f.Value == s.Value
 	})
 	if !ok {
-		return nil, appErrors.RiseError("Record not found")
+		return nil, apperrors.RiseError("Record not found")
 	}
 
 	val, _ := s.storage.Get(*exist)
