@@ -19,15 +19,15 @@ func NewDBStorage(connector db.Connector) *DBStorage {
 	}
 }
 
-func (s *DBStorage) Get(id uint64, contexts ...context.Context) (*Record, error) {
-	session := s.getSession(contexts)
+func (s *DBStorage) Get(context context.Context, id uint64) (*Record, error) {
+	session := s.getSession(context)
 	var r Record
 	err := session.First(&r, id).Error
 	return &r, err
 }
 
-func (s *DBStorage) Insert(entity *Record, contexts ...context.Context) (*Record, error) {
-	session := s.getSession(contexts)
+func (s *DBStorage) Insert(context context.Context, entity *Record) (*Record, error) {
+	session := s.getSession(context)
 	hashed(entity)
 	result := session.FirstOrCreate(entity, Record{Hash: entity.Hash})
 	err := result.Error
@@ -40,8 +40,8 @@ func (s *DBStorage) Insert(entity *Record, contexts ...context.Context) (*Record
 	return entity, err
 }
 
-func (s *DBStorage) BatchGetOrInsert(entities []*Record, contexts ...context.Context) ([]*Record, []error) {
-	session := s.getSession(contexts)
+func (s *DBStorage) BatchGetOrInsert(context context.Context, entities []*Record) ([]*Record, []error) {
+	session := s.getSession(context)
 	session.Begin(&sql.TxOptions{
 		Isolation: sql.LevelRepeatableRead,
 	})
@@ -58,17 +58,17 @@ func (s *DBStorage) BatchGetOrInsert(entities []*Record, contexts ...context.Con
 	return entities, err
 }
 
-func (s *DBStorage) Update(entity *Record, contexts ...context.Context) (*Record, error) {
-	return nil, apperrors.NonImplemented
+func (s *DBStorage) Update(_ context.Context, _ *Record) (*Record, error) {
+	return nil, apperrors.ErrNonImplemented
 }
 
-func (s *DBStorage) Delete(id uint64, contexts ...context.Context) error {
-	return apperrors.NonImplemented
+func (s *DBStorage) Delete(_ context.Context, _ uint64) error {
+	return apperrors.ErrNonImplemented
 }
 
-func (s *DBStorage) Find(search string, contexts ...context.Context) (*Record, error) {
+func (s *DBStorage) Find(context context.Context, search string) (*Record, error) {
 	h := hash.String(search)
-	session := s.getSession(contexts)
+	session := s.getSession(context)
 	var r Record
 	err := session.Where("\"Hash\" = $1", h).First(&r).Error
 	return &r, err
@@ -78,15 +78,6 @@ func (s *DBStorage) Close() error {
 	return s.connector.Close()
 }
 
-func (s *DBStorage) getSession(c []context.Context) *gorm.DB {
-	var session *gorm.DB
-	if len(c) > 0 {
-		session = s.connector.GetConnection().Session(&gorm.Session{
-			Context: c[0],
-		})
-	} else {
-		session = s.connector.GetConnection()
-	}
-
-	return session
+func (s *DBStorage) getSession(c context.Context) *gorm.DB {
+	return s.connector.GetConnection(c)
 }

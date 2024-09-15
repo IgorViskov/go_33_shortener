@@ -31,9 +31,9 @@ func (c shortController) Post() func(context echo.Context) error {
 		}
 		u, okValidate := validation.URL(string(body))
 		if !okValidate {
-			return apperrors.RiseError("Invalid URL")
+			return apperrors.ErrInvalidUrl
 		}
-		shorted, err := c.service.Short(u)
+		shorted, err := c.service.Short(context.Request().Context(), u)
 
 		status := http.StatusCreated
 		if err != nil {
@@ -55,7 +55,7 @@ func (c shortController) GetPath() string {
 	return c.path
 }
 
-func NewShortController(config *config.AppConfig, r storage.Repository[uint64, storage.Record]) *shortController {
+func NewShortController(config *config.AppConfig, r storage.Repository[uint64, storage.Record]) Controller {
 	return &shortController{
 		path:    "/",
 		service: shs.NewShortenerService(r),

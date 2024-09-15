@@ -17,7 +17,7 @@ func (c pingAPIController) Get() func(echoContext echo.Context) error {
 		if c.connector.IsConnected() {
 			return nil
 		}
-		c.connector.GetConnection()
+		c.connector.GetConnection(echoContext.Request().Context())
 		if !c.connector.IsConnected() {
 			return echoContext.NoContent(http.StatusInternalServerError)
 		}

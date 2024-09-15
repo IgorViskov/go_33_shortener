@@ -18,15 +18,15 @@ func NewInMemoryStorage() *InMemoryStorage {
 	return s
 }
 
-func (i *InMemoryStorage) Get(id uint64, _ ...context.Context) (*Record, error) {
+func (i *InMemoryStorage) Get(_ context.Context, id uint64) (*Record, error) {
 	val, ok := i.storage.Get(id)
 	if !ok {
-		return nil, apperrors.RiseError("Redirect URL not found")
+		return nil, apperrors.ErrRedirectUrlNotFound
 	}
 	return val, nil
 }
 
-func (i *InMemoryStorage) Insert(entity *Record, _ ...context.Context) (*Record, error) {
+func (i *InMemoryStorage) Insert(_ context.Context, entity *Record) (*Record, error) {
 	hashed(entity)
 	var id uint64
 	exist, added := i.storage.TryAdd(entity, func() uint64 {
@@ -42,12 +42,12 @@ func (i *InMemoryStorage) Insert(entity *Record, _ ...context.Context) (*Record,
 	return entity, nil
 }
 
-func (i *InMemoryStorage) BatchGetOrInsert(entities []*Record, contexts ...context.Context) ([]*Record, []error) {
+func (i *InMemoryStorage) BatchGetOrInsert(context context.Context, entities []*Record) ([]*Record, []error) {
 	result := make([]*Record, 0, len(entities))
 	err := make([]error, 0, len(entities))
 	for _, e := range entities {
 
-		added, e := i.Insert(e, contexts...)
+		added, e := i.Insert(context, e)
 		if e != nil {
 			err = append(err, e)
 		} else {
@@ -58,22 +58,22 @@ func (i *InMemoryStorage) BatchGetOrInsert(entities []*Record, contexts ...conte
 	return result, err
 }
 
-func (i *InMemoryStorage) Update(entity *Record, _ ...context.Context) (*Record, error) {
+func (i *InMemoryStorage) Update(_ context.Context, entity *Record) (*Record, error) {
 	i.storage.Set(entity.ID, entity)
 	return entity, nil
 }
 
-func (i *InMemoryStorage) Delete(id uint64, _ ...context.Context) error {
+func (i *InMemoryStorage) Delete(_ context.Context, id uint64) error {
 	i.storage.Remove(id)
 	return nil
 }
 
-func (i *InMemoryStorage) Find(search string, _ ...context.Context) (*Record, error) {
+func (i *InMemoryStorage) Find(_ context.Context, search string) (*Record, error) {
 	exist, ok := i.storage.Find(&Record{Value: search}, func(f *Record, s *Record) bool {
 		return f.Value == s.Value
 	})
 	if !ok {
-		return nil, apperrors.RiseError("Record not found")
+		return nil, apperrors.ErrRecordNotFound
 	}
 	val, _ := i.storage.Get(*exist)
 	return val, nil

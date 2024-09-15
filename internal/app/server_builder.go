@@ -17,7 +17,7 @@ type ServerBuilder struct {
 	controllers []Controller
 	middlewares []echo.MiddlewareFunc
 	router      *echo.Echo
-	app         *AppInstance
+	app         *Instance
 	conf        *config.AppConfig
 }
 

@@ -12,9 +12,8 @@ import (
 
 type Connector interface {
 	IsConnected() bool
-	GetConnection() *gorm.DB
+	GetConnection(context context.Context) *gorm.DB
 	GetError() error
-	GetContext() context.Context
 	Close() error
 }
 
@@ -22,19 +21,12 @@ type connector struct {
 	db               *gorm.DB
 	err              error
 	mutex            sync.Mutex
-	dbContext        context.Context
 	connectionString string
 	state            ConnectionState
 }
 
-func NewConnector(conf *config.AppConfig, contexts ...context.Context) Connector {
-	dbContext := context.Background()
-	if len(contexts) > 0 {
-		dbContext = contexts[0]
-	}
-
+func NewConnector(conf *config.AppConfig) Connector {
 	return &connector{
-		dbContext:        dbContext,
 		connectionString: conf.ConnectionString,
 	}
 }
@@ -42,7 +34,7 @@ func NewConnector(conf *config.AppConfig, contexts ...context.Context) Connector
 func (c *connector) IsConnected() bool {
 	switch c.state {
 	case NotConnected:
-		c.GetConnection()
+		c.GetConnection(context.Background())
 		return c.IsConnected()
 	case RefusedConnection:
 	case InvalidConnectionString:
@@ -52,7 +44,7 @@ func (c *connector) IsConnected() bool {
 	}
 	return false
 }
-func (c *connector) GetConnection() *gorm.DB {
+func (c *connector) GetConnection(context context.Context) *gorm.DB {
 	if c.db == nil {
 		c.mutex.Lock()
 		if c.db == nil {
@@ -66,7 +58,7 @@ func (c *connector) GetConnection() *gorm.DB {
 		c.mutex.Unlock()
 	}
 	return c.db.Session(&gorm.Session{
-		Context: c.dbContext,
+		Context: context,
 	})
 }
 
@@ -97,6 +89,9 @@ func (c *connector) connect() (*gorm.DB, error) {
 	})
 }
 
-func (c *connector) GetContext() context.Context {
-	return c.dbContext
+func (c *connector) getContext(contexts []context.Context) context.Context {
+	if len(contexts) > 0 {
+		return contexts[0]
+	}
+	return context.Background()
 }

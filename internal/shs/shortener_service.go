@@ -1,6 +1,7 @@
 package shs
 
 import (
+	"context"
 	"errors"
 	"github.com/IgorViskov/go_33_shortener/internal/algo"
 	"github.com/IgorViskov/go_33_shortener/internal/app/api/models"
@@ -19,8 +20,8 @@ func NewShortenerService(r storage.Repository[uint64, storage.Record]) *Shortene
 	}
 }
 
-func (s *ShortenerService) Short(url string) (string, error) {
-	rec, err := s.repository.Insert(&storage.Record{
+func (s *ShortenerService) Short(context context.Context, url string) (string, error) {
+	rec, err := s.repository.Insert(context, &storage.Record{
 		Value: url,
 		Date:  time.Now(),
 	})
@@ -31,7 +32,7 @@ func (s *ShortenerService) Short(url string) (string, error) {
 	return short, err
 }
 
-func (s *ShortenerService) BatchShort(batch []models.ShortenBatchItemDto) ([]models.ShortBatchItemDto, error) {
+func (s *ShortenerService) BatchShort(context context.Context, batch []models.ShortenBatchItemDto) ([]models.ShortBatchItemDto, error) {
 	dtos := ex.ToMap(batch, func(v models.ShortenBatchItemDto) string { return v.OriginalURL })
 	records := ex.Map(batch, func(so models.ShortenBatchItemDto) *storage.Record {
 		return &storage.Record{
@@ -39,8 +40,8 @@ func (s *ShortenerService) BatchShort(batch []models.ShortenBatchItemDto) ([]mod
 			Date:  time.Now(),
 		}
 	})
-	entities, errs := s.repository.BatchGetOrInsert(records)
-	var err error = nil
+	entities, errs := s.repository.BatchGetOrInsert(context, records)
+	var err error
 	if len(errs) > 0 {
 		err = errors.Join(errs...)
 	}
@@ -54,9 +55,9 @@ func (s *ShortenerService) BatchShort(batch []models.ShortenBatchItemDto) ([]mod
 	return result, err
 }
 
-func (s *ShortenerService) UnShort(token string) (string, error) {
+func (s *ShortenerService) UnShort(context context.Context, token string) (string, error) {
 	id := algo.Decode(token)
-	val, err := s.repository.Get(id)
+	val, err := s.repository.Get(context, id)
 	if err != nil {
 		return "", err
 	}

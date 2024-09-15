@@ -3,11 +3,11 @@ package storage
 import "context"
 
 type Repository[tid comparable, tentity any] interface {
-	Get(id tid, context ...context.Context) (*tentity, error)
-	Insert(entity *tentity, context ...context.Context) (*tentity, error)
-	Update(entity *tentity, context ...context.Context) (*tentity, error)
-	BatchGetOrInsert(entities []*tentity, context ...context.Context) ([]*tentity, []error)
-	Delete(id tid, context ...context.Context) error
-	Find(search string, context ...context.Context) (*tentity, error)
+	Get(context context.Context, id tid) (*tentity, error)
+	Insert(context context.Context, entity *tentity) (*tentity, error)
+	Update(context context.Context, entity *tentity) (*tentity, error)
+	BatchGetOrInsert(context context.Context, entities []*tentity) ([]*tentity, []error)
+	Delete(context context.Context, id tid) error
+	Find(context context.Context, search string) (*tentity, error)
 	Close() error
 }

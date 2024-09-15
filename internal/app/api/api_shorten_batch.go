@@ -32,10 +32,10 @@ func (c shortenBatchAPIController) Post() func(context echo.Context) error {
 		context.Response().Header().Add("Content-Type", "application/json")
 
 		if err != nil {
-			return apperrors.RiseError("Invalid json")
+			return apperrors.ErrInvalidJson
 		}
 
-		shorted, err := c.service.BatchShort(dtos)
+		shorted, err := c.service.BatchShort(context.Request().Context(), dtos)
 
 		if len(shorted) == 0 && err != nil {
 			return err

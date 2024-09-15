@@ -2,30 +2,14 @@ package apperrors
 
 import (
 	"errors"
-	"fmt"
-	"time"
 )
-
-type AppError struct {
-	DateTime time.Time `json:"-"`
-	Message  string    `json:"Message"`
-}
-
-func (e *AppError) Error() string {
-	return fmt.Sprintf("at %v, %s",
-		e.DateTime, e.Message)
-}
-
-func RiseError(message string) error {
-	return &AppError{
-		DateTime: time.Now(),
-		Message:  message,
-	}
-}
 
 var (
-	NonImplemented     = RiseError("Not Implemented")
-	ComparatorNotFound = RiseError("Comparator not found")
+	ErrNonImplemented      = errors.New("not implemented")
+	ErrComparatorNotFound  = errors.New("comparator not found")
+	ErrInsertConflict      = errors.New("insert conflict")
+	ErrRedirectUrlNotFound = errors.New("redirect url not found")
+	ErrRecordNotFound      = errors.New("record not found")
+	ErrInvalidUrl          = errors.New("invalid url")
+	ErrInvalidJson         = errors.New("invalid json")
 )
-
-var ErrInsertConflict = errors.New("insert conflict")
