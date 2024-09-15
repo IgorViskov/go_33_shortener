@@ -21,7 +21,7 @@ func NewInMemoryStorage() *InMemoryStorage {
 func (i *InMemoryStorage) Get(_ context.Context, id uint64) (*Record, error) {
 	val, ok := i.storage.Get(id)
 	if !ok {
-		return nil, apperrors.ErrRedirectUrlNotFound
+		return nil, apperrors.ErrRedirectURLNotFound
 	}
 	return val, nil
 }

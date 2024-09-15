@@ -31,7 +31,7 @@ func (c shortController) Post() func(context echo.Context) error {
 		}
 		u, okValidate := validation.URL(string(body))
 		if !okValidate {
-			return apperrors.ErrInvalidUrl
+			return apperrors.ErrInvalidURL
 		}
 		shorted, err := c.service.Short(context.Request().Context(), u)
 

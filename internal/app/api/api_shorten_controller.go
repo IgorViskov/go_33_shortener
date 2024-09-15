@@ -30,11 +30,11 @@ func (c shortenAPIController) Post() func(context echo.Context) error {
 		var dto models.ShortenDto
 		err := context.Bind(&dto)
 		if err != nil {
-			return apperrors.ErrInvalidJson
+			return apperrors.ErrInvalidJSON
 		}
 		u, okValidate := validation.URL(dto.URL)
 		if !okValidate {
-			return apperrors.ErrInvalidUrl
+			return apperrors.ErrInvalidURL
 		}
 		shorted, err := c.service.Short(context.Request().Context(), u)
 

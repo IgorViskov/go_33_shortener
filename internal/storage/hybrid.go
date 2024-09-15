@@ -42,7 +42,7 @@ func NewHybridStorage(config *config.AppConfig) (*HybridStorage, error) {
 func (s *HybridStorage) Get(_ context.Context, id uint64) (*Record, error) {
 	val, ok := s.storage.Get(id)
 	if !ok {
-		return nil, apperrors.ErrRedirectUrlNotFound
+		return nil, apperrors.ErrRedirectURLNotFound
 	}
 	return val, nil
 }
