@@ -168,6 +168,9 @@ func (cb *ServerBuilder) AddAuth(manager *users.Manager) *ServerBuilder {
 				_, err = jwt.ParseWithClaims(cookie.Value, claims, func(t *jwt.Token) (interface{}, error) {
 					return []byte(cb.conf.SecretKey), nil
 				})
+				if err != nil {
+					return err
+				}
 				cc.User, err = cb.usersManager.FindUser(c.Request().Context(), claims.UserID)
 				if err != nil {
 					return err
