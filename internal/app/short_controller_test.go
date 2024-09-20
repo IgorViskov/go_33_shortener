@@ -76,7 +76,7 @@ func Test_shortController_Post(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, "localhost:8080", strings.NewReader(tt.body))
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
-			c := e.NewContext(request, w)
+			c := createContext(e, request, w)
 
 			var err = con.Post()(c)
 			if err != nil {
@@ -98,14 +98,15 @@ func Test_shortController_Post(t *testing.T) {
 }
 
 func createShortController() *shortController {
+	conf := &config.AppConfig{RedirectAddress: url.URL{
+		Scheme: "http",
+		Host:   "localhost:8080",
+	},
+		HostName: "localhost:8080",
+	}
 	return &shortController{
 		path:    "/*",
-		service: shs.NewShortenerService(storage.NewInMemoryRecordStorage()),
-		config: &config.AppConfig{RedirectAddress: url.URL{
-			Scheme: "http",
-			Host:   "localhost:8080",
-		},
-			HostName: "localhost:8080",
-		},
+		service: shs.NewShortenerService(storage.NewInMemoryRecordStorage(), storage.NewInMemoryUsersStorage(), conf),
+		config:  conf,
 	}
 }

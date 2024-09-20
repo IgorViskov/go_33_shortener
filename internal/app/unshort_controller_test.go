@@ -4,6 +4,7 @@ import (
 	"github.com/IgorViskov/go_33_shortener/internal/config"
 	"github.com/IgorViskov/go_33_shortener/internal/shs"
 	"github.com/IgorViskov/go_33_shortener/internal/storage"
+	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"
@@ -68,7 +69,7 @@ func Test_mainController_Get(t *testing.T) {
 			postReq := httptest.NewRequest(http.MethodGet, "/", postReader)
 
 			rec := httptest.NewRecorder()
-			postContext := e.NewContext(postReq, rec)
+			postContext := createContext(e, postReq, rec)
 			postHandler := short.Post()
 			postHandler(postContext)
 
@@ -76,7 +77,8 @@ func Test_mainController_Get(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, tt.request, nil)
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
-			c := e.NewContext(request, w)
+
+			c := createContext(e, request, w)
 
 			err := unShort.Get()(c)
 
@@ -104,15 +106,26 @@ func Test_mainController_Post(t *testing.T) {
 	assert.Nil(t, con.Post())
 }
 
+func createContext(e *echo.Echo, request *http.Request, w *httptest.ResponseRecorder) *RoteContext {
+	ech := e.NewContext(request, w)
+	return &RoteContext{
+		ech,
+		&storage.User{
+			ID: 1,
+		},
+	}
+}
+
 func createUnShortController() *unShortController {
+	conf := &config.AppConfig{RedirectAddress: url.URL{
+		Scheme: "http",
+		Host:   "localhost:8080",
+	},
+		HostName: "localhost:8080",
+	}
 	return &unShortController{
 		path:    "/*",
-		service: shs.NewShortenerService(storage.NewInMemoryRecordStorage()),
-		config: &config.AppConfig{RedirectAddress: url.URL{
-			Scheme: "http",
-			Host:   "localhost:8080",
-		},
-			HostName: "localhost:8080",
-		},
+		service: shs.NewShortenerService(storage.NewInMemoryRecordStorage(), storage.NewInMemoryUsersStorage(), conf),
+		config:  conf,
 	}
 }
