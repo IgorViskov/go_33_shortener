@@ -27,8 +27,8 @@ func (c userURLsAPIController) Get() func(echoContext echo.Context) error {
 			return nil
 		}
 		echoContext.Response().Header().Add("Content-Type", "application/json")
-		responseDto := ex.Map(user.URLs, func(record storage.Record) models.UserUrlDto {
-			return models.UserUrlDto{
+		responseDto := ex.Map(user.URLs, func(record storage.Record) models.UserURLDto {
+			return models.UserURLDto{
 				ShortURL:    c.service.EncodeURL(record.ID),
 				OriginalURL: record.Value,
 			}

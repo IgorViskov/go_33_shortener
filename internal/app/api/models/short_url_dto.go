@@ -18,7 +18,7 @@ type ShortBatchItemDto struct {
 	ShortURL      string `json:"short_url"`
 }
 
-type UserUrlDto struct {
+type UserURLDto struct {
 	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
 }
