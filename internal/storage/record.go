@@ -45,7 +45,7 @@ func (r *Record) Deconstruct() []interface{} {
 
 // TableName Имя таблицы для GORM
 func (Record) TableName() string {
-	return "main.urls"
+	return "urls"
 }
 
 func hashed(r *Record) {
