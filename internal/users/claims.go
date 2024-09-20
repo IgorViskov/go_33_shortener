@@ -6,7 +6,3 @@ type Claims struct {
 	jwt.RegisteredClaims
 	UserID uint64
 }
-
-func NewUserClaims() {
-	return
-}
