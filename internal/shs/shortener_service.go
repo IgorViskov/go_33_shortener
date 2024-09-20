@@ -94,7 +94,7 @@ func (s *ShortenerService) UnShort(context context.Context, token string) (strin
 	return val.Value, nil
 }
 
-func (s *ShortenerService) EncodeUrl(id uint64) string {
+func (s *ShortenerService) EncodeURL(id uint64) string {
 	redirect := s.config.RedirectAddress
 	redirect.Path = fmt.Sprintf("%s/%s", redirect.Path, algo.Encode(id))
 	return redirect.String()
