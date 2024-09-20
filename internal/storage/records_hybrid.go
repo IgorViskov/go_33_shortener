@@ -12,15 +12,15 @@ import (
 	"sync/atomic"
 )
 
-type HybridStorage struct {
+type HybridRecordStorage struct {
 	current atomic.Uint64
 	storage *concurrent.SyncMap[uint64, *Record]
 	file    *os.File
 	writer  *bufio.Writer
 }
 
-func NewHybridStorage(config *config.AppConfig) (*HybridStorage, error) {
-	s := &HybridStorage{storage: concurrent.NewSyncMap[uint64, *Record]()}
+func NewHybridRecordStorage(config *config.AppConfig) (*HybridRecordStorage, error) {
+	s := &HybridRecordStorage{storage: concurrent.NewSyncMap[uint64, *Record]()}
 	s.current.Add(1000)
 
 	file, err := os.OpenFile(config.StorageFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0777)
@@ -39,7 +39,7 @@ func NewHybridStorage(config *config.AppConfig) (*HybridStorage, error) {
 	return s, nil
 }
 
-func (s *HybridStorage) Get(_ context.Context, id uint64) (*Record, error) {
+func (s *HybridRecordStorage) Get(_ context.Context, id uint64) (*Record, error) {
 	val, ok := s.storage.Get(id)
 	if !ok {
 		return nil, apperrors.ErrRedirectURLNotFound
@@ -47,7 +47,7 @@ func (s *HybridStorage) Get(_ context.Context, id uint64) (*Record, error) {
 	return val, nil
 }
 
-func (s *HybridStorage) Insert(_ context.Context, entity *Record) (*Record, error) {
+func (s *HybridRecordStorage) Insert(_ context.Context, entity *Record) (*Record, error) {
 	hashed(entity)
 	var id uint64
 	exist, added := s.storage.TryAdd(entity, func() uint64 {
@@ -68,7 +68,7 @@ func (s *HybridStorage) Insert(_ context.Context, entity *Record) (*Record, erro
 	return entity, nil
 }
 
-func (s *HybridStorage) BatchGetOrInsert(context context.Context, entities []*Record) ([]*Record, []error) {
+func (s *HybridRecordStorage) BatchGetOrInsert(context context.Context, entities []*Record) ([]*Record, []error) {
 	result := make([]*Record, 0, len(entities))
 	err := make([]error, 0, len(entities))
 	for _, e := range entities {
@@ -84,17 +84,17 @@ func (s *HybridStorage) BatchGetOrInsert(context context.Context, entities []*Re
 	return result, err
 }
 
-func (s *HybridStorage) Update(_ context.Context, entity *Record) (*Record, error) {
+func (s *HybridRecordStorage) Update(_ context.Context, entity *Record) (*Record, error) {
 	s.storage.Set(entity.ID, entity)
 	return entity, nil
 }
 
-func (s *HybridStorage) Delete(_ context.Context, id uint64) error {
+func (s *HybridRecordStorage) Delete(_ context.Context, id uint64) error {
 	s.storage.Remove(id)
 	return nil
 }
 
-func (s *HybridStorage) Find(_ context.Context, search string) (*Record, error) {
+func (s *HybridRecordStorage) Find(_ context.Context, search string) (*Record, error) {
 	exist, ok := s.storage.Find(&Record{Value: search}, func(f *Record, s *Record) bool {
 		return f.Value == s.Value
 	})
@@ -107,7 +107,7 @@ func (s *HybridStorage) Find(_ context.Context, search string) (*Record, error) 
 	return val, nil
 }
 
-func (s *HybridStorage) load() error {
+func (s *HybridRecordStorage) load() error {
 	scanner := bufio.NewScanner(s.file)
 	for scanner.Scan() {
 		data := scanner.Bytes()
@@ -125,7 +125,7 @@ func (s *HybridStorage) load() error {
 	return nil
 }
 
-func (s *HybridStorage) save(record *Record) error {
+func (s *HybridRecordStorage) save(record *Record) error {
 	dto := record.MapToDto(algo.Encode(record.ID))
 	data, err := json.Marshal(&dto)
 	if err != nil {
@@ -143,6 +143,6 @@ func (s *HybridStorage) save(record *Record) error {
 	return s.writer.Flush()
 }
 
-func (s *HybridStorage) Close() error {
+func (s *HybridRecordStorage) Close() error {
 	return s.file.Close()
 }

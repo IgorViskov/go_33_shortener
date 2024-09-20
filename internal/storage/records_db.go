@@ -9,24 +9,24 @@ import (
 	"gorm.io/gorm"
 )
 
-type DBStorage struct {
+type DBRecordsStorage struct {
 	connector db.Connector
 }
 
-func NewDBStorage(connector db.Connector) *DBStorage {
-	return &DBStorage{
+func NewDBRecordsStorage(connector db.Connector) *DBRecordsStorage {
+	return &DBRecordsStorage{
 		connector: connector,
 	}
 }
 
-func (s *DBStorage) Get(context context.Context, id uint64) (*Record, error) {
+func (s *DBRecordsStorage) Get(context context.Context, id uint64) (*Record, error) {
 	session := s.getSession(context)
 	var r Record
 	err := session.First(&r, id).Error
 	return &r, err
 }
 
-func (s *DBStorage) Insert(context context.Context, entity *Record) (*Record, error) {
+func (s *DBRecordsStorage) Insert(context context.Context, entity *Record) (*Record, error) {
 	session := s.getSession(context)
 	hashed(entity)
 	result := session.FirstOrCreate(entity, Record{Hash: entity.Hash})
@@ -40,7 +40,7 @@ func (s *DBStorage) Insert(context context.Context, entity *Record) (*Record, er
 	return entity, err
 }
 
-func (s *DBStorage) BatchGetOrInsert(context context.Context, entities []*Record) ([]*Record, []error) {
+func (s *DBRecordsStorage) BatchGetOrInsert(context context.Context, entities []*Record) ([]*Record, []error) {
 	session := s.getSession(context)
 	session.Begin(&sql.TxOptions{
 		Isolation: sql.LevelRepeatableRead,
@@ -58,15 +58,15 @@ func (s *DBStorage) BatchGetOrInsert(context context.Context, entities []*Record
 	return entities, err
 }
 
-func (s *DBStorage) Update(_ context.Context, _ *Record) (*Record, error) {
+func (s *DBRecordsStorage) Update(_ context.Context, _ *Record) (*Record, error) {
 	return nil, apperrors.ErrNonImplemented
 }
 
-func (s *DBStorage) Delete(_ context.Context, _ uint64) error {
+func (s *DBRecordsStorage) Delete(_ context.Context, _ uint64) error {
 	return apperrors.ErrNonImplemented
 }
 
-func (s *DBStorage) Find(context context.Context, search string) (*Record, error) {
+func (s *DBRecordsStorage) Find(context context.Context, search string) (*Record, error) {
 	h := hash.String(search)
 	session := s.getSession(context)
 	var r Record
@@ -74,10 +74,10 @@ func (s *DBStorage) Find(context context.Context, search string) (*Record, error
 	return &r, err
 }
 
-func (s *DBStorage) Close() error {
+func (s *DBRecordsStorage) Close() error {
 	return s.connector.Close()
 }
 
-func (s *DBStorage) getSession(c context.Context) *gorm.DB {
+func (s *DBRecordsStorage) getSession(c context.Context) *gorm.DB {
 	return s.connector.GetConnection(c)
 }

@@ -41,3 +41,12 @@ func Map[TSource any, TResult any](source []TSource, selector func(TSource) TRes
 	}
 	return result
 }
+
+func Add[TValue any](slice []TValue, item TValue) []TValue {
+	if len(slice) == 0 {
+		slice = make([]TValue, 0)
+	}
+	slice = append(slice, item)
+
+	return slice
+}

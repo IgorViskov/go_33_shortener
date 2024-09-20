@@ -12,4 +12,5 @@ var (
 	ErrRecordNotFound      = errors.New("record not found")
 	ErrInvalidURL          = errors.New("invalid url")
 	ErrInvalidJSON         = errors.New("invalid json")
+	ErrUserNotFound        = errors.New("user not found")
 )

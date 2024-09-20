@@ -100,7 +100,7 @@ func Test_shortController_Post(t *testing.T) {
 func createShortController() *shortController {
 	return &shortController{
 		path:    "/*",
-		service: shs.NewShortenerService(storage.NewInMemoryStorage()),
+		service: shs.NewShortenerService(storage.NewInMemoryRecordStorage()),
 		config: &config.AppConfig{RedirectAddress: url.URL{
 			Scheme: "http",
 			Host:   "localhost:8080",

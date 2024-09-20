@@ -3,7 +3,6 @@ package app
 import (
 	"github.com/IgorViskov/go_33_shortener/internal/config"
 	"github.com/IgorViskov/go_33_shortener/internal/shs"
-	"github.com/IgorViskov/go_33_shortener/internal/storage"
 	"github.com/labstack/echo/v4"
 	"net/http"
 )
@@ -34,11 +33,11 @@ func (c unShortController) GetPath() string {
 	return c.path
 }
 
-func NewUnShortController(config *config.AppConfig, r storage.Repository[uint64, storage.Record]) Controller {
+func NewUnShortController(config *config.AppConfig, service *shs.ShortenerService) Controller {
 
 	return &unShortController{
 		path:    config.RedirectAddress.Path + "/*",
-		service: shs.NewShortenerService(r),
+		service: service,
 		config:  config,
 	}
 }

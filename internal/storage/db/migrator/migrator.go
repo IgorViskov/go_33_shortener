@@ -7,5 +7,6 @@ import (
 )
 
 func AutoMigrate(connector db.Connector) error {
-	return connector.GetConnection(context.Background()).AutoMigrate(&storage.Record{})
+	session := connector.GetConnection(context.Background())
+	return session.AutoMigrate(&storage.User{}, &storage.Record{})
 }

@@ -9,7 +9,6 @@ import (
 	"github.com/IgorViskov/go_33_shortener/internal/apperrors"
 	"github.com/IgorViskov/go_33_shortener/internal/config"
 	"github.com/IgorViskov/go_33_shortener/internal/shs"
-	"github.com/IgorViskov/go_33_shortener/internal/storage"
 	"github.com/IgorViskov/go_33_shortener/internal/validation"
 	"github.com/labstack/echo/v4"
 	"net/http"
@@ -36,7 +35,7 @@ func (c shortenAPIController) Post() func(context echo.Context) error {
 		if !okValidate {
 			return apperrors.ErrInvalidURL
 		}
-		shorted, err := c.service.Short(context.Request().Context(), u)
+		shorted, err := c.service.Short(context.Request().Context(), u, app.GetUser(context))
 
 		status := http.StatusCreated
 		if err != nil {
@@ -62,10 +61,10 @@ func (c shortenAPIController) GetPath() string {
 	return c.path
 }
 
-func NewShortenAPIController(config *config.AppConfig, r storage.Repository[uint64, storage.Record]) app.Controller {
+func NewShortenAPIController(config *config.AppConfig, service *shs.ShortenerService) app.Controller {
 	return &shortenAPIController{
 		path:    "/api/shorten",
-		service: shs.NewShortenerService(r),
+		service: service,
 		config:  config,
 	}
 }
