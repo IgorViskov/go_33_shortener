@@ -11,13 +11,13 @@ import (
 
 var lock = &sync.Mutex{}
 
-var logInstance *logWrapper
+var logInstance *wrapper
 
-type logWrapper struct {
+type wrapper struct {
 	logger *zap.Logger
 }
 
-func Log() *logWrapper {
+func Log() *wrapper {
 	if logInstance == nil {
 		lock.Lock()
 		defer lock.Unlock()
@@ -29,14 +29,18 @@ func Log() *logWrapper {
 	return logInstance
 }
 
-func initLog() *logWrapper {
+func Error(e error) {
+	logInstance.logger.Error(e.Error())
+}
+
+func initLog() *wrapper {
 	logger, err := zap.NewDevelopment()
 	if err != nil {
 		// вызываем панику, если ошибка
 		panic("cannot initialize zap")
 	}
 
-	return &logWrapper{
+	return &wrapper{
 		logger: logger,
 	}
 }

@@ -2,11 +2,12 @@ package storage
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"github.com/IgorViskov/go_33_shortener/internal/algo"
+	"github.com/IgorViskov/go_33_shortener/internal/apperrors"
 	"github.com/IgorViskov/go_33_shortener/internal/concurrent"
 	"github.com/IgorViskov/go_33_shortener/internal/config"
-	"github.com/IgorViskov/go_33_shortener/internal/errors"
 	"os"
 	"sync/atomic"
 )
@@ -38,19 +39,27 @@ func NewHybridStorage(config *config.AppConfig) (*HybridStorage, error) {
 	return s, nil
 }
 
-func (s *HybridStorage) Get(id uint64) (*Record, error) {
+func (s *HybridStorage) Get(_ context.Context, id uint64) (*Record, error) {
 	val, ok := s.storage.Get(id)
 	if !ok {
-		return nil, errors.RiseError("Redirect URL not found")
+		return nil, apperrors.ErrRedirectURLNotFound
 	}
 	return val, nil
 }
 
-func (s *HybridStorage) Insert(entity *Record) (*Record, error) {
-	id := s.current.Add(1)
+func (s *HybridStorage) Insert(_ context.Context, entity *Record) (*Record, error) {
+	hashed(entity)
+	var id uint64
+	exist, added := s.storage.TryAdd(entity, func() uint64 {
+		id = s.current.Add(1)
+		return id
+	}, func(r1 *Record, r2 *Record) bool {
+		return r1.Hash == r2.Hash
+	})
+	if !added {
+		return exist, apperrors.ErrInsertConflict
+	}
 	entity.ID = id
-	s.storage.Set(id, entity)
-
 	err := s.save(entity)
 	if err != nil {
 		return nil, err
@@ -59,22 +68,38 @@ func (s *HybridStorage) Insert(entity *Record) (*Record, error) {
 	return entity, nil
 }
 
-func (s *HybridStorage) Update(entity *Record) (*Record, error) {
+func (s *HybridStorage) BatchGetOrInsert(context context.Context, entities []*Record) ([]*Record, []error) {
+	result := make([]*Record, 0, len(entities))
+	err := make([]error, 0, len(entities))
+	for _, e := range entities {
+
+		added, e := s.Insert(context, e)
+		if e != nil {
+			err = append(err, e)
+		} else {
+			result = append(result, added)
+		}
+	}
+
+	return result, err
+}
+
+func (s *HybridStorage) Update(_ context.Context, entity *Record) (*Record, error) {
 	s.storage.Set(entity.ID, entity)
 	return entity, nil
 }
 
-func (s *HybridStorage) Delete(id uint64) error {
+func (s *HybridStorage) Delete(_ context.Context, id uint64) error {
 	s.storage.Remove(id)
 	return nil
 }
 
-func (s *HybridStorage) Find(search string) (*Record, error) {
+func (s *HybridStorage) Find(_ context.Context, search string) (*Record, error) {
 	exist, ok := s.storage.Find(&Record{Value: search}, func(f *Record, s *Record) bool {
 		return f.Value == s.Value
 	})
 	if !ok {
-		return nil, errors.RiseError("Record not found")
+		return nil, apperrors.ErrRecordNotFound
 	}
 
 	val, _ := s.storage.Get(*exist)

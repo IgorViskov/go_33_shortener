@@ -18,7 +18,7 @@ func (c unShortController) Get() func(context echo.Context) error {
 	return func(context echo.Context) error {
 		left := len(c.config.RedirectAddress.Path) + 1
 		short := context.Request().URL.Path[left:]
-		moved, err := c.service.UnShort(short)
+		moved, err := c.service.UnShort(context.Request().Context(), short)
 		if err != nil {
 			return err
 		}
@@ -34,7 +34,7 @@ func (c unShortController) GetPath() string {
 	return c.path
 }
 
-func NewUnShortController(config *config.AppConfig, r storage.Repository[uint64, storage.Record]) *unShortController {
+func NewUnShortController(config *config.AppConfig, r storage.Repository[uint64, storage.Record]) Controller {
 
 	return &unShortController{
 		path:    config.RedirectAddress.Path + "/*",

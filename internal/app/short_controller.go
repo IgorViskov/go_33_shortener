@@ -1,9 +1,10 @@
 package app
 
 import (
+	"errors"
 	"fmt"
+	"github.com/IgorViskov/go_33_shortener/internal/apperrors"
 	"github.com/IgorViskov/go_33_shortener/internal/config"
-	"github.com/IgorViskov/go_33_shortener/internal/errors"
 	"github.com/IgorViskov/go_33_shortener/internal/shs"
 	"github.com/IgorViskov/go_33_shortener/internal/storage"
 	"github.com/IgorViskov/go_33_shortener/internal/validation"
@@ -30,18 +31,23 @@ func (c shortController) Post() func(context echo.Context) error {
 		}
 		u, okValidate := validation.URL(string(body))
 		if !okValidate {
-			return errors.RiseError("Invalid URL")
+			return apperrors.ErrInvalidURL
 		}
-		shorted, err := c.service.Short(u)
+		shorted, err := c.service.Short(context.Request().Context(), u)
 
+		status := http.StatusCreated
 		if err != nil {
-			return err
+			if errors.Is(err, apperrors.ErrInsertConflict) {
+				status = http.StatusConflict
+			} else {
+				return err
+			}
 		}
 
 		redirect := c.config.RedirectAddress
 		redirect.Path = fmt.Sprintf("%s/%s", redirect.Path, shorted)
 
-		return context.String(http.StatusCreated, redirect.String())
+		return context.String(status, redirect.String())
 	}
 }
 
@@ -49,7 +55,7 @@ func (c shortController) GetPath() string {
 	return c.path
 }
 
-func NewShortController(config *config.AppConfig, r storage.Repository[uint64, storage.Record]) *shortController {
+func NewShortController(config *config.AppConfig, r storage.Repository[uint64, storage.Record]) Controller {
 	return &shortController{
 		path:    "/",
 		service: shs.NewShortenerService(r),

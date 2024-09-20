@@ -6,9 +6,11 @@ import (
 )
 
 type AppConfig struct {
-	HostName        string  `validate:"hostname_port" env:"SERVER_ADDRESS"`
-	RedirectAddress url.URL `env:"BASE_URL"`
-	StorageFile     string  `env:"FILE_STORAGE_PATH"`
+	HostName         string  `validate:"hostname_port" env:"SERVER_ADDRESS"`
+	RedirectAddress  url.URL `env:"BASE_URL"`
+	StorageFile      string  `env:"FILE_STORAGE_PATH"`
+	ConnectionString string  `env:"DATABASE_DSN"`
+	CacheSize        int     `env:"CACHE_SIZE"`
 }
 
 func HostNameParser(conf *AppConfig) func(flagValue string) error {
@@ -35,6 +37,13 @@ func StorageFileParser(conf *AppConfig) func(flagValue string) error {
 			return err
 		}
 		conf.StorageFile = flagValue
+		return nil
+	}
+}
+
+func ConnectionStringParser(conf *AppConfig) func(flagValue string) error {
+	return func(flagValue string) error {
+		conf.ConnectionString = flagValue
 		return nil
 	}
 }

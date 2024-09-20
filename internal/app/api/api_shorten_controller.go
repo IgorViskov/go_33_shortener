@@ -2,10 +2,12 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/IgorViskov/go_33_shortener/internal/app"
 	"github.com/IgorViskov/go_33_shortener/internal/app/api/models"
+	"github.com/IgorViskov/go_33_shortener/internal/apperrors"
 	"github.com/IgorViskov/go_33_shortener/internal/config"
-	"github.com/IgorViskov/go_33_shortener/internal/errors"
 	"github.com/IgorViskov/go_33_shortener/internal/shs"
 	"github.com/IgorViskov/go_33_shortener/internal/storage"
 	"github.com/IgorViskov/go_33_shortener/internal/validation"
@@ -28,16 +30,21 @@ func (c shortenAPIController) Post() func(context echo.Context) error {
 		var dto models.ShortenDto
 		err := context.Bind(&dto)
 		if err != nil {
-			return context.String(http.StatusBadRequest, "Invalid json")
+			return apperrors.ErrInvalidJSON
 		}
 		u, okValidate := validation.URL(dto.URL)
 		if !okValidate {
-			return errors.RiseError("Invalid URL")
+			return apperrors.ErrInvalidURL
 		}
-		shorted, err := c.service.Short(u)
+		shorted, err := c.service.Short(context.Request().Context(), u)
 
+		status := http.StatusCreated
 		if err != nil {
-			return err
+			if errors.Is(err, apperrors.ErrInsertConflict) {
+				status = http.StatusConflict
+			} else {
+				return err
+			}
 		}
 
 		redirect := c.config.RedirectAddress
@@ -46,7 +53,7 @@ func (c shortenAPIController) Post() func(context echo.Context) error {
 		responseDto := new(models.ShortDto)
 		responseDto.Result = redirect.String()
 		context.Response().Header().Add("Content-Type", "application/json")
-		context.Response().Status = http.StatusCreated
+		context.Response().Status = status
 		return json.NewEncoder(context.Response()).Encode(&responseDto)
 	}
 }
@@ -55,7 +62,7 @@ func (c shortenAPIController) GetPath() string {
 	return c.path
 }
 
-func NewShortenAPIController(config *config.AppConfig, r storage.Repository[uint64, storage.Record]) *shortenAPIController {
+func NewShortenAPIController(config *config.AppConfig, r storage.Repository[uint64, storage.Record]) app.Controller {
 	return &shortenAPIController{
 		path:    "/api/shorten",
 		service: shs.NewShortenerService(r),

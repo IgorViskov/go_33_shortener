@@ -1,8 +1,9 @@
 package storage
 
 import (
+	"context"
+	"github.com/IgorViskov/go_33_shortener/internal/apperrors"
 	"github.com/IgorViskov/go_33_shortener/internal/concurrent"
-	"github.com/IgorViskov/go_33_shortener/internal/errors"
 	"sync/atomic"
 )
 
@@ -17,38 +18,67 @@ func NewInMemoryStorage() *InMemoryStorage {
 	return s
 }
 
-func (i *InMemoryStorage) Get(id uint64) (*Record, error) {
+func (i *InMemoryStorage) Get(_ context.Context, id uint64) (*Record, error) {
 	val, ok := i.storage.Get(id)
 	if !ok {
-		return nil, errors.RiseError("Redirect URL not found")
+		return nil, apperrors.ErrRedirectURLNotFound
 	}
 	return val, nil
 }
 
-func (i *InMemoryStorage) Insert(entity *Record) (*Record, error) {
-	id := i.current.Add(1)
+func (i *InMemoryStorage) Insert(_ context.Context, entity *Record) (*Record, error) {
+	hashed(entity)
+	var id uint64
+	exist, added := i.storage.TryAdd(entity, func() uint64 {
+		id = i.current.Add(1)
+		return id
+	}, func(r1 *Record, r2 *Record) bool {
+		return r1.Hash == r2.Hash
+	})
+	if !added {
+		return exist, apperrors.ErrInsertConflict
+	}
 	entity.ID = id
-	i.storage.Set(id, entity)
 	return entity, nil
 }
 
-func (i *InMemoryStorage) Update(entity *Record) (*Record, error) {
+func (i *InMemoryStorage) BatchGetOrInsert(context context.Context, entities []*Record) ([]*Record, []error) {
+	result := make([]*Record, 0, len(entities))
+	err := make([]error, 0, len(entities))
+	for _, e := range entities {
+
+		added, e := i.Insert(context, e)
+		if e != nil {
+			err = append(err, e)
+		} else {
+			result = append(result, added)
+		}
+	}
+
+	return result, err
+}
+
+func (i *InMemoryStorage) Update(_ context.Context, entity *Record) (*Record, error) {
 	i.storage.Set(entity.ID, entity)
 	return entity, nil
 }
 
-func (i *InMemoryStorage) Delete(id uint64) error {
+func (i *InMemoryStorage) Delete(_ context.Context, id uint64) error {
 	i.storage.Remove(id)
 	return nil
 }
 
-func (i *InMemoryStorage) Find(search string) (*Record, error) {
+func (i *InMemoryStorage) Find(_ context.Context, search string) (*Record, error) {
 	exist, ok := i.storage.Find(&Record{Value: search}, func(f *Record, s *Record) bool {
 		return f.Value == s.Value
 	})
 	if !ok {
-		return nil, errors.RiseError("Record not found")
+		return nil, apperrors.ErrRecordNotFound
 	}
 	val, _ := i.storage.Get(*exist)
 	return val, nil
+}
+
+func (i *InMemoryStorage) Close() error {
+	return nil
 }
