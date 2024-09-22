@@ -48,13 +48,12 @@ func (s *HybridRecordStorage) Get(_ context.Context, id uint64) (*Record, error)
 }
 
 func (s *HybridRecordStorage) Insert(_ context.Context, entity *Record) (*Record, error) {
-	hashed(entity)
 	var id uint64
 	exist, added := s.storage.TryAdd(entity, func() uint64 {
 		id = s.current.Add(1)
 		return id
 	}, func(r1 *Record, r2 *Record) bool {
-		return r1.Hash == r2.Hash
+		return r1.Value == r2.Value
 	})
 	if !added {
 		return exist, apperrors.ErrInsertConflict
@@ -90,7 +89,20 @@ func (s *HybridRecordStorage) Update(_ context.Context, entity *Record) (*Record
 }
 
 func (s *HybridRecordStorage) Delete(_ context.Context, id uint64) error {
-	s.storage.Remove(id)
+	r, ok := s.storage.Get(id)
+	if !ok {
+		return apperrors.ErrRecordNotFound
+	}
+	r.IsDeleted = 1
+	return nil
+}
+
+func (s *HybridRecordStorage) BulkDelete(_ context.Context, records []*Record) error {
+	for _, record := range records {
+		r, _ := s.storage.Get(record.ID)
+		r.IsDeleted = 1
+	}
+
 	return nil
 }
 

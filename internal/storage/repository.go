@@ -14,6 +14,7 @@ type Repository[tid comparable, tentity any] interface {
 type RecordRepository interface {
 	Repository[uint64, Record]
 	BatchGetOrInsert(context context.Context, entities []*Record) ([]*Record, []error)
+	BulkDelete(context context.Context, records []*Record) error
 }
 
 type UserRepository interface {

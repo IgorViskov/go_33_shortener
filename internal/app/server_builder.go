@@ -99,6 +99,9 @@ func (cb *ServerBuilder) Build() Starting {
 		if post := c.Post(); post != nil {
 			cb.router.POST(c.GetPath(), post)
 		}
+		if deleteHandler := c.Delete(); deleteHandler != nil {
+			cb.router.DELETE(c.GetPath(), deleteHandler)
+		}
 	}
 	cb.router.HTTPErrorHandler = customHTTPErrorHandler
 	return cb
@@ -169,11 +172,11 @@ func (cb *ServerBuilder) AddAuth(manager *users.Manager) *ServerBuilder {
 					return []byte(cb.conf.SecretKey), nil
 				})
 				if err != nil {
-					return err
+					return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 				}
 				cc.User, err = cb.usersManager.FindUser(c.Request().Context(), claims.UserID)
 				if err != nil {
-					return err
+					return echo.NewHTTPError(http.StatusNotFound, err.Error())
 				}
 			}
 

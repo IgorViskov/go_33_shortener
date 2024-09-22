@@ -7,6 +7,7 @@ import (
 	"github.com/IgorViskov/go_33_shortener/internal/apperrors"
 	"github.com/IgorViskov/go_33_shortener/internal/storage/db"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type DBRecordsStorage struct {
@@ -22,14 +23,13 @@ func NewDBRecordsStorage(connector db.Connector) *DBRecordsStorage {
 func (s *DBRecordsStorage) Get(context context.Context, id uint64) (*Record, error) {
 	session := s.getSession(context)
 	var r Record
-	err := session.First(&r, id).Error
+	err := session.Unscoped().First(&r, id).Error
 	return &r, err
 }
 
 func (s *DBRecordsStorage) Insert(context context.Context, entity *Record) (*Record, error) {
 	session := s.getSession(context)
-	hashed(entity)
-	result := session.FirstOrCreate(entity, Record{Hash: entity.Hash})
+	result := session.FirstOrCreate(entity, Record{Value: entity.Value})
 	err := result.Error
 	if err != nil {
 		return entity, err
@@ -47,8 +47,7 @@ func (s *DBRecordsStorage) BatchGetOrInsert(context context.Context, entities []
 	})
 	err := make([]error, 0, len(entities))
 	for _, entity := range entities {
-		hashed(entity)
-		e := session.FirstOrCreate(entity, Record{Hash: entity.Hash}).Error
+		e := session.FirstOrCreate(entity, Record{Value: entity.Value}).Error
 		if e != nil {
 			err = append(err, e)
 		}
@@ -62,8 +61,13 @@ func (s *DBRecordsStorage) Update(_ context.Context, _ *Record) (*Record, error)
 	return nil, apperrors.ErrNonImplemented
 }
 
-func (s *DBRecordsStorage) Delete(_ context.Context, _ uint64) error {
-	return apperrors.ErrNonImplemented
+func (s *DBRecordsStorage) Delete(context context.Context, id uint64) error {
+	session := s.getSession(context)
+	return session.Association(clause.Associations).Delete(&Record{ID: id})
+}
+func (s *DBRecordsStorage) BulkDelete(context context.Context, records []*Record) error {
+	session := s.getSession(context)
+	return session.Select(clause.Associations).Delete(&records).Error
 }
 
 func (s *DBRecordsStorage) Find(context context.Context, search string) (*Record, error) {

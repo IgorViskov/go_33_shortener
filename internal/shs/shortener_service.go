@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"github.com/IgorViskov/go_33_shortener/internal/algo"
 	"github.com/IgorViskov/go_33_shortener/internal/app/api/models"
+	"github.com/IgorViskov/go_33_shortener/internal/apperrors"
 	"github.com/IgorViskov/go_33_shortener/internal/config"
 	"github.com/IgorViskov/go_33_shortener/internal/ex"
 	"github.com/IgorViskov/go_33_shortener/internal/storage"
 	"github.com/labstack/gommon/log"
+	"gorm.io/plugin/soft_delete"
 	"time"
 )
 
@@ -40,7 +42,7 @@ func (s *ShortenerService) Short(context context.Context, url string, user *stor
 	//Превращаем ID записи всегда в один и тот же набор символов для конкретного значения
 	short := algo.Encode(rec.ID)
 
-	user.URLs = ex.Add(user.URLs, *rec)
+	user.URLs = ex.Add(user.URLs, rec)
 
 	_, errUpdate := s.users.Update(context, user)
 
@@ -73,7 +75,7 @@ func (s *ShortenerService) BatchShort(context context.Context, batch []models.Sh
 	})
 
 	for _, r := range records {
-		user.URLs = ex.Add(user.URLs, *r)
+		user.URLs = ex.Add(user.URLs, r)
 	}
 
 	_, errUpdate := s.users.Update(context, user)
@@ -91,6 +93,9 @@ func (s *ShortenerService) UnShort(context context.Context, token string) (strin
 	if err != nil {
 		return "", err
 	}
+	if uint(val.IsDeleted) == uint(soft_delete.FlagDeleted) {
+		return "", apperrors.ErrRecordIsGone
+	}
 	return val.Value, nil
 }
 
@@ -98,4 +103,13 @@ func (s *ShortenerService) EncodeURL(id uint64) string {
 	redirect := s.config.RedirectAddress
 	redirect.Path = fmt.Sprintf("%s/%s", redirect.Path, algo.Encode(id))
 	return redirect.String()
+}
+
+func (s *ShortenerService) DeleteRecordsAsync(context context.Context, records []*storage.Record) {
+	go func() {
+		err := s.records.BulkDelete(context, records)
+		if err != nil {
+			log.Error(err)
+		}
+	}()
 }

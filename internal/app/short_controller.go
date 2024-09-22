@@ -30,7 +30,7 @@ func (c shortController) Post() func(context echo.Context) error {
 		}
 		u, okValidate := validation.URL(string(body))
 		if !okValidate {
-			return apperrors.ErrInvalidURL
+			return ErrorResult(http.StatusBadRequest, apperrors.ErrInvalidURL)
 		}
 		shorted, err := c.service.Short(context.Request().Context(), u, GetUser(context))
 
@@ -39,7 +39,7 @@ func (c shortController) Post() func(context echo.Context) error {
 			if errors.Is(err, apperrors.ErrInsertConflict) {
 				status = http.StatusConflict
 			} else {
-				return err
+				return ErrorResult(http.StatusInternalServerError, err)
 			}
 		}
 
@@ -49,6 +49,8 @@ func (c shortController) Post() func(context echo.Context) error {
 		return context.String(status, redirect.String())
 	}
 }
+
+func (c shortController) Delete() func(c echo.Context) error { return nil }
 
 func (c shortController) GetPath() string {
 	return c.path

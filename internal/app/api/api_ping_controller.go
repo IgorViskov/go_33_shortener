@@ -29,6 +29,8 @@ func (c pingAPIController) Post() func(context echo.Context) error {
 	return nil
 }
 
+func (c pingAPIController) Delete() func(c echo.Context) error { return nil }
+
 func (c pingAPIController) GetPath() string {
 	return c.path
 }

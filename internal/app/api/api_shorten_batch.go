@@ -31,13 +31,13 @@ func (c shortenBatchAPIController) Post() func(context echo.Context) error {
 		context.Response().Header().Add("Content-Type", "application/json")
 
 		if err != nil {
-			return apperrors.ErrInvalidJSON
+			return app.ErrorResult(http.StatusBadRequest, apperrors.ErrInvalidJSON)
 		}
 
 		shorted, err := c.service.BatchShort(context.Request().Context(), dtos, app.GetUser(context))
 
 		if len(shorted) == 0 && err != nil {
-			return err
+			return app.ErrorResult(http.StatusBadRequest, err)
 		} else if err != nil {
 			log.Error(err)
 		}
@@ -59,6 +59,8 @@ func (c shortenBatchAPIController) Post() func(context echo.Context) error {
 func (c shortenBatchAPIController) GetPath() string {
 	return c.path
 }
+
+func (c shortenBatchAPIController) Delete() func(c echo.Context) error { return nil }
 
 func NewShortenBatchAPIController(config *config.AppConfig, service *shs.ShortenerService) app.Controller {
 	return &shortenBatchAPIController{

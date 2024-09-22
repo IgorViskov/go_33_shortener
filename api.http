@@ -12,7 +12,7 @@ Content-Type: application/json
 }
 ###
 
-GET http://localhost:8080/h
+GET http://localhost:8080/b
 Content-Type: text/plain
 ###
 
@@ -38,3 +38,9 @@ Content-Type: application/json
 ###
 GET http://localhost:8080/api/user/urls
 Content-Type: application/json
+
+###
+DELETE http://localhost:8080/api/user/urls
+Content-Type: application/json
+
+["ql"]

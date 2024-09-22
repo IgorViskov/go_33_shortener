@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"github.com/IgorViskov/go_33_shortener/internal/apperrors"
 	"github.com/IgorViskov/go_33_shortener/internal/storage/db"
 	"gorm.io/gorm"
@@ -48,7 +49,12 @@ func (s *DBUsersStorage) Find(_ context.Context, _ string) (*User, error) {
 func (s *DBUsersStorage) GetFull(context context.Context, id uint64) (*User, error) {
 	session := s.getSession(context)
 	u := &User{}
-	e := session.Preload(clause.Associations).Find(u, id).Error
+	e := session.Preload(clause.Associations).First(u, id).Error
+
+	if errors.Is(e, gorm.ErrRecordNotFound) {
+		return nil, apperrors.ErrUserNotFound
+	}
+
 	return u, e
 }
 

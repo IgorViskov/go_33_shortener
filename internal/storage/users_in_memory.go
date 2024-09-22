@@ -4,6 +4,8 @@ import (
 	"context"
 	"github.com/IgorViskov/go_33_shortener/internal/apperrors"
 	"github.com/IgorViskov/go_33_shortener/internal/concurrent"
+	"github.com/IgorViskov/go_33_shortener/internal/ex"
+	"gorm.io/plugin/soft_delete"
 	"sync/atomic"
 )
 
@@ -22,6 +24,9 @@ func (i *InMemoryUsersStorage) Get(_ context.Context, id uint64) (*User, error) 
 	if !ok {
 		return nil, apperrors.ErrUserNotFound
 	}
+	val.URLs = ex.Where(val.URLs, func(record *Record) bool {
+		return uint(record.IsDeleted) != uint(soft_delete.FlagDeleted)
+	})
 	return val, nil
 }
 

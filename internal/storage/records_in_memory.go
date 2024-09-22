@@ -27,13 +27,12 @@ func (i *InMemoryRecordStorage) Get(_ context.Context, id uint64) (*Record, erro
 }
 
 func (i *InMemoryRecordStorage) Insert(_ context.Context, entity *Record) (*Record, error) {
-	hashed(entity)
 	var id uint64
 	exist, added := i.storage.TryAdd(entity, func() uint64 {
 		id = i.current.Add(1)
 		return id
 	}, func(r1 *Record, r2 *Record) bool {
-		return r1.Hash == r2.Hash
+		return r1.Value == r2.Value
 	})
 	if !added {
 		return exist, apperrors.ErrInsertConflict
@@ -64,7 +63,20 @@ func (i *InMemoryRecordStorage) Update(_ context.Context, entity *Record) (*Reco
 }
 
 func (i *InMemoryRecordStorage) Delete(_ context.Context, id uint64) error {
-	i.storage.Remove(id)
+	r, ok := i.storage.Get(id)
+	if !ok {
+		return apperrors.ErrRecordNotFound
+	}
+	r.IsDeleted = 1
+	return nil
+}
+
+func (i *InMemoryRecordStorage) BulkDelete(_ context.Context, records []*Record) error {
+	for _, record := range records {
+		r, _ := i.storage.Get(record.ID)
+		r.IsDeleted = 1
+	}
+
 	return nil
 }
 

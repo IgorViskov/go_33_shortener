@@ -8,5 +8,10 @@ import (
 
 func AutoMigrate(connector db.Connector) error {
 	session := connector.GetConnection(context.Background())
-	return session.AutoMigrate(&storage.User{}, &storage.Record{})
+	err := session.AutoMigrate(&storage.User{}, &storage.Record{})
+	if err != nil {
+		return err
+	}
+
+	return session.Exec(CreatePartialIndex).Error
 }

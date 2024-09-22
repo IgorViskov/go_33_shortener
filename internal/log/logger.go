@@ -30,7 +30,7 @@ func Log() *wrapper {
 }
 
 func Error(e error) {
-	logInstance.logger.Error(e.Error())
+	Log().logger.Error(e.Error())
 }
 
 func initLog() *wrapper {

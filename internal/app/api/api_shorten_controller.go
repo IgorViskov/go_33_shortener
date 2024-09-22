@@ -29,11 +29,11 @@ func (c shortenAPIController) Post() func(context echo.Context) error {
 		var dto models.ShortenDto
 		err := context.Bind(&dto)
 		if err != nil {
-			return apperrors.ErrInvalidJSON
+			return app.ErrorResult(http.StatusBadRequest, apperrors.ErrInvalidJSON)
 		}
 		u, okValidate := validation.URL(dto.URL)
 		if !okValidate {
-			return apperrors.ErrInvalidURL
+			return app.ErrorResult(http.StatusBadRequest, apperrors.ErrInvalidURL)
 		}
 		shorted, err := c.service.Short(context.Request().Context(), u, app.GetUser(context))
 
@@ -42,7 +42,7 @@ func (c shortenAPIController) Post() func(context echo.Context) error {
 			if errors.Is(err, apperrors.ErrInsertConflict) {
 				status = http.StatusConflict
 			} else {
-				return err
+				return app.ErrorResult(http.StatusInternalServerError, err)
 			}
 		}
 
@@ -60,6 +60,8 @@ func (c shortenAPIController) Post() func(context echo.Context) error {
 func (c shortenAPIController) GetPath() string {
 	return c.path
 }
+
+func (c shortenAPIController) Delete() func(c echo.Context) error { return nil }
 
 func NewShortenAPIController(config *config.AppConfig, service *shs.ShortenerService) app.Controller {
 	return &shortenAPIController{
