@@ -9,7 +9,6 @@ import (
 	"github.com/IgorViskov/go_33_shortener/internal/apperrors"
 	"github.com/IgorViskov/go_33_shortener/internal/config"
 	"github.com/IgorViskov/go_33_shortener/internal/shs"
-	"github.com/IgorViskov/go_33_shortener/internal/storage"
 	"github.com/IgorViskov/go_33_shortener/internal/validation"
 	"github.com/labstack/echo/v4"
 	"net/http"
@@ -30,20 +29,20 @@ func (c shortenAPIController) Post() func(context echo.Context) error {
 		var dto models.ShortenDto
 		err := context.Bind(&dto)
 		if err != nil {
-			return apperrors.ErrInvalidJSON
+			return app.ErrorResult(http.StatusBadRequest, apperrors.ErrInvalidJSON)
 		}
 		u, okValidate := validation.URL(dto.URL)
 		if !okValidate {
-			return apperrors.ErrInvalidURL
+			return app.ErrorResult(http.StatusBadRequest, apperrors.ErrInvalidURL)
 		}
-		shorted, err := c.service.Short(context.Request().Context(), u)
+		shorted, err := c.service.Short(context.Request().Context(), u, app.GetUser(context))
 
 		status := http.StatusCreated
 		if err != nil {
 			if errors.Is(err, apperrors.ErrInsertConflict) {
 				status = http.StatusConflict
 			} else {
-				return err
+				return app.ErrorResult(http.StatusInternalServerError, err)
 			}
 		}
 
@@ -62,10 +61,12 @@ func (c shortenAPIController) GetPath() string {
 	return c.path
 }
 
-func NewShortenAPIController(config *config.AppConfig, r storage.Repository[uint64, storage.Record]) app.Controller {
+func (c shortenAPIController) Delete() func(c echo.Context) error { return nil }
+
+func NewShortenAPIController(config *config.AppConfig, service *shs.ShortenerService) app.Controller {
 	return &shortenAPIController{
 		path:    "/api/shorten",
-		service: shs.NewShortenerService(r),
+		service: service,
 		config:  config,
 	}
 }

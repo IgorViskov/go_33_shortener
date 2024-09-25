@@ -7,9 +7,11 @@ import (
 	"github.com/IgorViskov/go_33_shortener/internal/closer"
 	"github.com/IgorViskov/go_33_shortener/internal/config"
 	"github.com/IgorViskov/go_33_shortener/internal/log"
+	"github.com/IgorViskov/go_33_shortener/internal/shs"
 	"github.com/IgorViskov/go_33_shortener/internal/storage"
 	"github.com/IgorViskov/go_33_shortener/internal/storage/db"
 	"github.com/IgorViskov/go_33_shortener/internal/storage/db/migrator"
+	"github.com/IgorViskov/go_33_shortener/internal/users"
 	"github.com/caarlos0/env/v11"
 	"net/url"
 	"os"
@@ -26,16 +28,20 @@ func main() {
 func configurator(conf *config.AppConfig) app.ConfigureFunc {
 	return func(cb *app.ServerBuilder) {
 		connector := db.NewConnector(conf)
-		s := selectStorage(connector, conf)
+		r, u := selectStorage(connector, conf)
+		service := shs.NewShortenerService(r, u, conf)
 		cb.AddConfig(conf).
 			UseCompression().
 			Use(log.Logging()).
-			AddController(app.NewShortController(conf, s)).
-			AddController(app.NewUnShortController(conf, s)).
-			AddController(api.NewShortenAPIController(conf, s)).
+			AddAuth(users.NewManager(u)).
+			AddController(app.NewShortController(conf, service)).
+			AddController(app.NewUnShortController(conf, service)).
+			AddController(api.NewShortenAPIController(conf, service)).
 			AddController(api.NewPingAPIController(connector)).
-			AddController(api.NewShortenBatchAPIController(conf, s)).
-			AddCloser(s)
+			AddController(api.NewShortenBatchAPIController(conf, service)).
+			AddController(api.NewUserURLsAPIController(service)).
+			AddCloser(r).
+			AddCloser(u)
 	}
 }
 
@@ -49,6 +55,7 @@ func getConfig() *config.AppConfig {
 		RedirectAddress: redirect,
 		HostName:        "localhost:8080",
 		CacheSize:       10,
+		SecretKey:       "SHgd%f$*23sdj",
 	}
 
 	readFlags(conf)
@@ -65,6 +72,7 @@ func readFlags(conf *config.AppConfig) {
 	flag.Func("b", "Базовый адрес результирующего сокращённого URL", config.RedirectAddressParser(conf))
 	flag.Func("f", "Путь до файла с сохраненными адресами", config.StorageFileParser(conf))
 	flag.Func("d", "DSN подключения postgres", config.ConnectionStringParser(conf))
+	flag.Func("s", "Секретный ключ", config.SecretKeyParser(conf))
 	// запускаем парсинг
 	flag.Parse()
 }
@@ -73,20 +81,20 @@ func readEnvironments(conf *config.AppConfig) error {
 	return env.Parse(conf)
 }
 
-func selectStorage(connector db.Connector, conf *config.AppConfig) storage.Repository[uint64, storage.Record] {
+func selectStorage(connector db.Connector, conf *config.AppConfig) (storage.RecordRepository, storage.UserRepository) {
 	if connector.IsConnected() {
 		if err := migrator.AutoMigrate(connector); err != nil {
 			log.Error(err)
 		}
-		return storage.NewDBStorage(connector)
+		return storage.NewDBRecordsStorage(connector), storage.NewDBUsersStorage(connector)
 	}
 	if conf.StorageFile != "" {
-		s, err := storage.NewHybridStorage(conf)
+		s, err := storage.NewHybridRecordStorage(conf)
 		if err != nil {
 			panic(err)
 		}
-		return s
+		return s, storage.NewInMemoryUsersStorage()
 	}
 
-	return storage.NewInMemoryStorage()
+	return storage.NewInMemoryRecordStorage(), storage.NewInMemoryUsersStorage()
 }

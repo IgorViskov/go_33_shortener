@@ -4,6 +4,8 @@ import (
 	"errors"
 	"github.com/IgorViskov/go_33_shortener/internal/config"
 	"github.com/IgorViskov/go_33_shortener/internal/ex"
+	"github.com/IgorViskov/go_33_shortener/internal/users"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
@@ -12,13 +14,15 @@ import (
 )
 
 var compressContentTypes = []string{"plain/text", "application/json", "application/x-gzip", "text/html"}
+var authCookieName = "auth"
 
 type ServerBuilder struct {
-	controllers []Controller
-	middlewares []echo.MiddlewareFunc
-	router      *echo.Echo
-	app         *Instance
-	conf        *config.AppConfig
+	controllers  []Controller
+	middlewares  []echo.MiddlewareFunc
+	router       *echo.Echo
+	app          *Instance
+	conf         *config.AppConfig
+	usersManager *users.Manager
 }
 
 func Create() *ServerBuilder {
@@ -95,6 +99,9 @@ func (cb *ServerBuilder) Build() Starting {
 		if post := c.Post(); post != nil {
 			cb.router.POST(c.GetPath(), post)
 		}
+		if deleteHandler := c.Delete(); deleteHandler != nil {
+			cb.router.DELETE(c.GetPath(), deleteHandler)
+		}
 	}
 	cb.router.HTTPErrorHandler = customHTTPErrorHandler
 	return cb
@@ -131,4 +138,74 @@ func (cb *ServerBuilder) Close() {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func (cb *ServerBuilder) AddAuth(manager *users.Manager) *ServerBuilder {
+	cb.usersManager = manager
+	cb.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			claims := &users.Claims{}
+
+			cc := &RoteContext{
+				Context: c,
+			}
+
+			cookie, err := c.Request().Cookie(authCookieName)
+			if err != nil {
+
+				if c.Request().Method != echo.POST {
+					return next(cc)
+				}
+
+				cc.User, err = cb.usersManager.CreateUser(c.Request().Context())
+				if err != nil {
+					return err
+				}
+				claims.UserID = cc.User.ID
+				cookie, err = cb.createCookie(claims)
+				if err != nil {
+					return err
+				}
+				http.SetCookie(c.Response().Writer, cookie)
+			} else {
+				_, err = jwt.ParseWithClaims(cookie.Value, claims, func(t *jwt.Token) (interface{}, error) {
+					return []byte(cb.conf.SecretKey), nil
+				})
+				if err != nil {
+					return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+				}
+				cc.User, err = cb.usersManager.FindUser(c.Request().Context(), claims.UserID)
+				if err != nil {
+					return echo.NewHTTPError(http.StatusNotFound, err.Error())
+				}
+			}
+
+			return next(cc)
+		}
+	})
+	return cb
+}
+
+func (cb *ServerBuilder) createCookie(claims *users.Claims) (*http.Cookie, error) {
+	val, err := cb.getToken(claims)
+	if err != nil {
+		return nil, err
+	}
+	return &http.Cookie{
+		Name:  authCookieName,
+		Value: val,
+		Path:  "/",
+	}, nil
+}
+
+func (cb *ServerBuilder) getToken(claims *users.Claims) (string, error) {
+	claims.RegisteredClaims = jwt.RegisteredClaims{}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	tokenString, err := token.SignedString([]byte(cb.conf.SecretKey))
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
 }

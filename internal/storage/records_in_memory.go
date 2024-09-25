@@ -7,18 +7,18 @@ import (
 	"sync/atomic"
 )
 
-type InMemoryStorage struct {
+type InMemoryRecordStorage struct {
 	current atomic.Uint64
 	storage *concurrent.SyncMap[uint64, *Record]
 }
 
-func NewInMemoryStorage() *InMemoryStorage {
-	s := &InMemoryStorage{storage: concurrent.NewSyncMap[uint64, *Record]()}
+func NewInMemoryRecordStorage() *InMemoryRecordStorage {
+	s := &InMemoryRecordStorage{storage: concurrent.NewSyncMap[uint64, *Record]()}
 	s.current.Add(1000)
 	return s
 }
 
-func (i *InMemoryStorage) Get(_ context.Context, id uint64) (*Record, error) {
+func (i *InMemoryRecordStorage) Get(_ context.Context, id uint64) (*Record, error) {
 	val, ok := i.storage.Get(id)
 	if !ok {
 		return nil, apperrors.ErrRedirectURLNotFound
@@ -26,14 +26,13 @@ func (i *InMemoryStorage) Get(_ context.Context, id uint64) (*Record, error) {
 	return val, nil
 }
 
-func (i *InMemoryStorage) Insert(_ context.Context, entity *Record) (*Record, error) {
-	hashed(entity)
+func (i *InMemoryRecordStorage) Insert(_ context.Context, entity *Record) (*Record, error) {
 	var id uint64
 	exist, added := i.storage.TryAdd(entity, func() uint64 {
 		id = i.current.Add(1)
 		return id
 	}, func(r1 *Record, r2 *Record) bool {
-		return r1.Hash == r2.Hash
+		return r1.Value == r2.Value
 	})
 	if !added {
 		return exist, apperrors.ErrInsertConflict
@@ -42,7 +41,7 @@ func (i *InMemoryStorage) Insert(_ context.Context, entity *Record) (*Record, er
 	return entity, nil
 }
 
-func (i *InMemoryStorage) BatchGetOrInsert(context context.Context, entities []*Record) ([]*Record, []error) {
+func (i *InMemoryRecordStorage) BatchGetOrInsert(context context.Context, entities []*Record) ([]*Record, []error) {
 	result := make([]*Record, 0, len(entities))
 	err := make([]error, 0, len(entities))
 	for _, e := range entities {
@@ -58,17 +57,30 @@ func (i *InMemoryStorage) BatchGetOrInsert(context context.Context, entities []*
 	return result, err
 }
 
-func (i *InMemoryStorage) Update(_ context.Context, entity *Record) (*Record, error) {
+func (i *InMemoryRecordStorage) Update(_ context.Context, entity *Record) (*Record, error) {
 	i.storage.Set(entity.ID, entity)
 	return entity, nil
 }
 
-func (i *InMemoryStorage) Delete(_ context.Context, id uint64) error {
-	i.storage.Remove(id)
+func (i *InMemoryRecordStorage) Delete(_ context.Context, id uint64) error {
+	r, ok := i.storage.Get(id)
+	if !ok {
+		return apperrors.ErrRecordNotFound
+	}
+	r.IsDeleted = 1
 	return nil
 }
 
-func (i *InMemoryStorage) Find(_ context.Context, search string) (*Record, error) {
+func (i *InMemoryRecordStorage) BulkDelete(_ context.Context, records []*Record) error {
+	for _, record := range records {
+		r, _ := i.storage.Get(record.ID)
+		r.IsDeleted = 1
+	}
+
+	return nil
+}
+
+func (i *InMemoryRecordStorage) Find(_ context.Context, search string) (*Record, error) {
 	exist, ok := i.storage.Find(&Record{Value: search}, func(f *Record, s *Record) bool {
 		return f.Value == s.Value
 	})
@@ -79,6 +91,6 @@ func (i *InMemoryStorage) Find(_ context.Context, search string) (*Record, error
 	return val, nil
 }
 
-func (i *InMemoryStorage) Close() error {
+func (i *InMemoryRecordStorage) Close() error {
 	return nil
 }

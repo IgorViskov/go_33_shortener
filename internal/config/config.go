@@ -11,6 +11,7 @@ type AppConfig struct {
 	StorageFile      string  `env:"FILE_STORAGE_PATH"`
 	ConnectionString string  `env:"DATABASE_DSN"`
 	CacheSize        int     `env:"CACHE_SIZE"`
+	SecretKey        string  `env:"SECRET_KEY"`
 }
 
 func HostNameParser(conf *AppConfig) func(flagValue string) error {
@@ -44,6 +45,13 @@ func StorageFileParser(conf *AppConfig) func(flagValue string) error {
 func ConnectionStringParser(conf *AppConfig) func(flagValue string) error {
 	return func(flagValue string) error {
 		conf.ConnectionString = flagValue
+		return nil
+	}
+}
+
+func SecretKeyParser(conf *AppConfig) func(flagValue string) error {
+	return func(flagValue string) error {
+		conf.SecretKey = flagValue
 		return nil
 	}
 }

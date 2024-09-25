@@ -7,5 +7,11 @@ import (
 )
 
 func AutoMigrate(connector db.Connector) error {
-	return connector.GetConnection(context.Background()).AutoMigrate(&storage.Record{})
+	session := connector.GetConnection(context.Background())
+	err := session.AutoMigrate(&storage.User{}, &storage.Record{})
+	if err != nil {
+		return err
+	}
+
+	return session.Exec(CreatePartialIndex).Error
 }

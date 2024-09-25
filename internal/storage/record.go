@@ -1,16 +1,16 @@
 package storage
 
 import (
-	"bitbucket.org/pcastools/hash"
+	"gorm.io/plugin/soft_delete"
 	"strconv"
 	"time"
 )
 
 type Record struct {
-	ID    uint64    `gorm:"column:ID;primary_key;auto_increment"`
-	Value string    `gorm:"column:Value;unique"`
-	Date  time.Time `gorm:"column:Date"`
-	Hash  uint32    `gorm:"column:Hash;index"`
+	ID        uint64                `gorm:"column:ID;primary_key;auto_increment"`
+	Value     string                `gorm:"column:Value"`
+	Date      time.Time             `gorm:"column:Date"`
+	IsDeleted soft_delete.DeletedAt `gorm:"column:IsDeleted;softDelete:flag"`
 }
 
 type RecordDto struct {
@@ -46,10 +46,4 @@ func (r *Record) Deconstruct() []interface{} {
 // TableName Имя таблицы для GORM
 func (Record) TableName() string {
 	return "urls"
-}
-
-func hashed(r *Record) {
-	if r.Hash == 0 {
-		r.Hash = hash.String(r.Value)
-	}
 }

@@ -41,3 +41,35 @@ func Map[TSource any, TResult any](source []TSource, selector func(TSource) TRes
 	}
 	return result
 }
+
+func Add[TValue any](slice []TValue, item TValue) []TValue {
+	if len(slice) == 0 {
+		slice = make([]TValue, 0)
+	}
+	slice = append(slice, item)
+
+	return slice
+}
+
+func Where[TValue any](source []TValue, selector func(TValue) bool) []TValue {
+	if len(source) == 0 {
+		return make([]TValue, 0)
+	}
+	res := make([]TValue, 0)
+	for _, s := range source {
+		if selector(s) {
+			res = append(res, s)
+		}
+	}
+
+	return res
+}
+
+func Include[T comparable](find T, slice []T) bool {
+	for _, s := range slice {
+		if s == find {
+			return true
+		}
+	}
+	return false
+}

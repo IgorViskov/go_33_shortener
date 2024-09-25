@@ -12,7 +12,7 @@ Content-Type: application/json
 }
 ###
 
-GET http://localhost:8080/h
+GET http://localhost:8080/b
 Content-Type: text/plain
 ###
 
@@ -35,3 +35,12 @@ Content-Type: application/json
 
 [{"correlation_id":"4ea23c53-045e-44ec-b06a-0eef5aa37981","original_url":"http://jgjalx.net/eif0st/ffhhovmb0/or40rhnlx"},{"correlation_id":"659e162b-ec5d-46b2-a1c5-e7eac038eec4","original_url":"http://qlwpd6n1zv.com"}]
 
+###
+GET http://localhost:8080/api/user/urls
+Content-Type: application/json
+
+###
+DELETE http://localhost:8080/api/user/urls
+Content-Type: application/json
+
+["ql"]

@@ -6,7 +6,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"gorm.io/gorm/schema"
 	"sync"
 )
 
@@ -81,12 +80,7 @@ func (c *connector) connect() (*gorm.DB, error) {
 		c.state = InvalidConnectionString
 		return nil, err
 	}
-	return gorm.Open(postgres.Open(c.connectionString), &gorm.Config{
-		NamingStrategy: schema.NamingStrategy{
-			TablePrefix:   "main.",
-			SingularTable: false,
-		},
-	})
+	return gorm.Open(postgres.Open(c.connectionString))
 }
 
 func (c *connector) getContext(contexts []context.Context) context.Context {
